@@ -4,6 +4,7 @@ import { useRef, useEffect, useState } from "react";
 
 const TOTAL_FRAMES = 153;
 const LERP_SPEED = 6;
+const INDICATOR_EXIT = 0.18;
 
 function framePath(i: number): string {
   return `/hero/scroll%201_${String(i).padStart(3, "0")}.webp`;
@@ -12,6 +13,7 @@ function framePath(i: number): string {
 export default function HeroSection() {
   const sectionRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const indicatorRef = useRef<HTMLDivElement>(null);
   const [loadPct, setLoadPct] = useState(0);
 
   useEffect(() => {
@@ -60,6 +62,16 @@ export default function HeroSection() {
       const scrollable = section!.offsetHeight - window.innerHeight;
       const p = Math.max(0, Math.min(1, -rect.top / scrollable));
       targetFrame = p * (TOTAL_FRAMES - 1);
+
+      const indicator = indicatorRef.current;
+      if (indicator) {
+        const t = Math.min(1, p / INDICATOR_EXIT);
+        const scale = 1 + t * 2;
+        const translateY = t * 200;
+        const opacity = 1 - t;
+        indicator.style.transform = `translateX(-50%) translateY(${translateY}px) scale(${scale})`;
+        indicator.style.opacity = String(opacity);
+      }
     }
 
     function onScroll() {
@@ -117,10 +129,11 @@ export default function HeroSection() {
       await Promise.all(Array.from({ length: CONCURRENT }, worker));
     }
 
+    window.addEventListener("scroll", onScroll, { passive: true });
+    updateTarget();
+
     loadAll().then(() => {
       if (destroyed) return;
-      window.addEventListener("scroll", onScroll, { passive: true });
-      updateTarget();
       lastTime = performance.now();
       rafId = requestAnimationFrame(tick);
     });
@@ -140,6 +153,31 @@ export default function HeroSection() {
     <div ref={sectionRef} className="relative h-[500vh]">
       <div className="sticky top-0 h-screen w-full overflow-hidden bg-black">
         <canvas ref={canvasRef} className="block h-full w-full" />
+        <div
+          ref={indicatorRef}
+          className="absolute bottom-10 left-1/2 z-20 flex flex-col items-center gap-2 text-white/70"
+          style={{ willChange: "transform, opacity" }}
+        >
+          <span className="text-xs tracking-[0.3em] uppercase">Scroll</span>
+          <svg
+            width="20"
+            height="28"
+            viewBox="0 0 20 28"
+            fill="none"
+            className="animate-bounce"
+          >
+            <rect
+              x="1"
+              y="1"
+              width="18"
+              height="26"
+              rx="9"
+              stroke="currentColor"
+              strokeWidth="1.5"
+            />
+            <circle cx="10" cy="8" r="2" fill="currentColor" />
+          </svg>
+        </div>
         {loadPct < 100 && (
           <div className="absolute inset-0 z-10 flex items-center justify-center bg-black text-white text-sm tracking-wide">
             {loadPct}%
