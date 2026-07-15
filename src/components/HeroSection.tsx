@@ -1,0 +1,151 @@
+"use client";
+
+import { useRef, useEffect, useState } from "react";
+
+const TOTAL_FRAMES = 153;
+const LERP_SPEED = 6;
+
+function framePath(i: number): string {
+  return `/hero/scroll%201_${String(i).padStart(3, "0")}.webp`;
+}
+
+export default function HeroSection() {
+  const sectionRef = useRef<HTMLDivElement>(null);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const [loadPct, setLoadPct] = useState(0);
+
+  useEffect(() => {
+    const section = sectionRef.current;
+    const canvas = canvasRef.current;
+    if (!section || !canvas) return;
+
+    const ctx = canvas.getContext("2d", { alpha: false, desynchronized: true });
+    if (!ctx) return;
+
+    let destroyed = false;
+    let bitmaps: ImageBitmap[] = new Array(TOTAL_FRAMES);
+    let loadedCount = 0;
+    let rafId = 0;
+    let currentFrame = 0;
+    let targetFrame = 0;
+    let lastDrawn = -1;
+    let lastTime = performance.now();
+
+    function resizeCanvas() {
+      const dpr = window.devicePixelRatio || 1;
+      canvas!.width = Math.round(window.innerWidth * dpr);
+      canvas!.height = Math.round(window.innerHeight * dpr);
+      canvas!.style.width = "100%";
+      canvas!.style.height = "100%";
+      lastDrawn = -1;
+    }
+
+    resizeCanvas();
+    window.addEventListener("resize", resizeCanvas);
+
+    function drawCover(idx: number) {
+      const bm = bitmaps[idx];
+      if (!bm) return;
+      const cw = canvas!.width;
+      const ch = canvas!.height;
+      const scale = Math.max(cw / bm.width, ch / bm.height);
+      const dw = bm.width * scale;
+      const dh = bm.height * scale;
+      ctx!.clearRect(0, 0, cw, ch);
+      ctx!.drawImage(bm, (cw - dw) / 2, (ch - dh) / 2, dw, dh);
+    }
+
+    function updateTarget() {
+      const rect = section!.getBoundingClientRect();
+      const scrollable = section!.offsetHeight - window.innerHeight;
+      const p = Math.max(0, Math.min(1, -rect.top / scrollable));
+      targetFrame = p * (TOTAL_FRAMES - 1);
+    }
+
+    function onScroll() {
+      updateTarget();
+    }
+
+    function tick(now: number) {
+      const dt = Math.min((now - lastTime) / 16.667, 3);
+      lastTime = now;
+
+      const diff = targetFrame - currentFrame;
+      if (Math.abs(diff) < 0.001) {
+        currentFrame = targetFrame;
+      } else {
+        currentFrame += diff * (1 - Math.exp(-LERP_SPEED * dt));
+      }
+
+      const idx = Math.min(TOTAL_FRAMES - 1, Math.max(0, Math.round(currentFrame)));
+
+      if (idx !== lastDrawn && bitmaps[idx]) {
+        drawCover(idx);
+        lastDrawn = idx;
+      }
+
+      rafId = requestAnimationFrame(tick);
+    }
+
+    async function loadAll() {
+      const CONCURRENT = 12;
+      let next = 0;
+
+      async function worker() {
+        while (next < TOTAL_FRAMES && !destroyed) {
+          const i = next++;
+          try {
+            const resp = await fetch(framePath(i));
+            const blob = await resp.blob();
+            const bm = await createImageBitmap(blob);
+            bitmaps[i] = bm;
+          } catch {
+            // retry once
+            try {
+              const resp = await fetch(framePath(i));
+              const blob = await resp.blob();
+              bitmaps[i] = await createImageBitmap(blob);
+            } catch {
+              // skip frame
+            }
+          }
+          loadedCount++;
+          setLoadPct(Math.round((loadedCount / TOTAL_FRAMES) * 100));
+        }
+      }
+
+      await Promise.all(Array.from({ length: CONCURRENT }, worker));
+    }
+
+    loadAll().then(() => {
+      if (destroyed) return;
+      window.addEventListener("scroll", onScroll, { passive: true });
+      updateTarget();
+      lastTime = performance.now();
+      rafId = requestAnimationFrame(tick);
+    });
+
+    return () => {
+      destroyed = true;
+      window.removeEventListener("scroll", onScroll);
+      window.removeEventListener("resize", resizeCanvas);
+      cancelAnimationFrame(rafId);
+      for (const bm of bitmaps) {
+        if (bm) bm.close();
+      }
+    };
+  }, []);
+
+  return (
+    <div ref={sectionRef} className="relative h-[500vh]">
+      <div className="sticky top-0 h-screen w-full overflow-hidden bg-black">
+        <canvas ref={canvasRef} className="block h-full w-full" />
+        {loadPct < 100 && (
+          <div className="absolute inset-0 z-10 flex items-center justify-center bg-black text-white text-sm tracking-wide">
+            {loadPct}%
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
