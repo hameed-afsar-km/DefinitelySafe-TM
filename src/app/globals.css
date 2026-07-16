@@ -51,6 +51,17 @@ html {
   100% { opacity: 1; }
 }
 
+.splash-bg-reveal {
+  opacity: 0;
+  filter: blur(20px);
+  animation: splash-bg-in 3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes splash-bg-in {
+  0%   { opacity: 0; filter: blur(20px); }
+  100% { opacity: 1; filter: blur(0px); }
+}
+
 @keyframes fade-in-out-short {
   0% { opacity: 0; }
   20% { opacity: 1; }
@@ -75,4 +86,246 @@ html {
 
 .animate-fade-in-out-long {
   animation: fade-in-out-long 2.2s ease-in-out forwards;
+}
+
+/* CONSTRUCTING — text + loading bar */
+.constructing-group {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.5rem;
+  opacity: 0;
+  animation: constructing-fade-in 0.4s ease-out 0.1s forwards,
+             constructing-fade-out 0.3s ease-in 2.7s forwards;
+}
+
+.constructing-text {
+  opacity: 0;
+  animation: text-slide-up 0.5s cubic-bezier(0.16, 1, 0.3, 1) 0.1s forwards,
+             text-slide-down 0.3s cubic-bezier(0.7, 0, 0.84, 0) 2.7s forwards;
+}
+
+.constructing-bar-track {
+  width: 260px;
+  height: 1px;
+  background: rgba(255, 255, 255, 0.15);
+  overflow: hidden;
+}
+
+.constructing-bar-fill {
+  width: 100%;
+  height: 100%;
+  background: white;
+  transform-origin: left;
+  transform: scaleX(0);
+  animation: bar-fill 2.6s cubic-bezier(0.65, 0, 0.35, 1) 0.2s forwards,
+             bar-unfill 0.3s cubic-bezier(0.7, 0, 0.84, 0) 2.7s forwards;
+}
+
+@keyframes constructing-fade-in {
+  0%   { opacity: 0; }
+  100% { opacity: 1; }
+}
+
+@keyframes constructing-fade-out {
+  0%   { opacity: 1; }
+  100% { opacity: 0; }
+}
+
+@keyframes text-slide-up {
+  0%   { opacity: 0; transform: translateY(12px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes text-slide-down {
+  0%   { opacity: 1; transform: translateY(0); }
+  100% { opacity: 0; transform: translateY(-12px); }
+}
+
+@keyframes bar-fill {
+  0%   { transform: scaleX(0); }
+  100% { transform: scaleX(1); }
+}
+
+@keyframes bar-unfill {
+  0%   { transform: scaleX(1); transform-origin: right; }
+  100% { transform: scaleX(0); transform-origin: right; }
+}
+
+/* DefinitelySafe — architectural drafting reveal */
+.arch-group {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.25rem;
+  padding: 2.5rem 4rem;
+}
+
+/* Corner brackets — L-shaped marks at each corner */
+.arch-corner {
+  position: absolute;
+  width: 20px;
+  height: 20px;
+  opacity: 0;
+}
+.arch-corner::before,
+.arch-corner::after {
+  content: "";
+  position: absolute;
+  background: rgba(255, 255, 255, 0.7);
+}
+.arch-corner::before {
+  width: 100%;
+  height: 1px;
+}
+.arch-corner::after {
+  width: 1px;
+  height: 100%;
+}
+
+.arch-corner-tl { top: 0; left: 0; }
+.arch-corner-tl::before { top: 0; left: 0; }
+.arch-corner-tl::after  { top: 0; left: 0; }
+
+.arch-corner-tr { top: 0; right: 0; }
+.arch-corner-tr::before { top: 0; right: 0; }
+.arch-corner-tr::after  { top: 0; right: 0; }
+
+.arch-corner-bl { bottom: 0; left: 0; }
+.arch-corner-bl::before { bottom: 0; left: 0; }
+.arch-corner-bl::after  { bottom: 0; left: 0; }
+
+.arch-corner-br { bottom: 0; right: 0; }
+.arch-corner-br::before { bottom: 0; right: 0; }
+.arch-corner-br::after  { bottom: 0; right: 0; }
+
+/* Draw-in animation for corners */
+.arch-corner {
+  animation: arch-corner-in 0.4s cubic-bezier(0.77, 0, 0.175, 1) 0.05s forwards,
+             arch-corner-out 0.3s cubic-bezier(0.77, 0, 0.175, 1) 2.7s forwards;
+}
+
+@keyframes arch-corner-in {
+  0%   { opacity: 0; transform: scale(0.5); }
+  100% { opacity: 1; transform: scale(1); }
+}
+
+@keyframes arch-corner-out {
+  0%   { opacity: 1; transform: scale(1); }
+  100% { opacity: 0; transform: scale(0.5); }
+}
+
+/* Dimension lines — horizontal lines with perpendicular ticks */
+.arch-dim {
+  position: relative;
+  width: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.arch-dim-line {
+  position: absolute;
+  height: 1px;
+  background: rgba(255, 255, 255, 0.4);
+  width: 100%;
+  left: 0;
+}
+
+.arch-dim-tick {
+  width: 1px;
+  height: 8px;
+  background: rgba(255, 255, 255, 0.5);
+  position: relative;
+  z-index: 1;
+}
+
+.arch-dim-top { width: 0; }
+.arch-dim-bottom { width: 0; }
+
+.arch-dim {
+  animation: arch-dim-expand 0.6s cubic-bezier(0.77, 0, 0.175, 1) 0.2s forwards,
+             arch-dim-collapse 0.4s cubic-bezier(0.77, 0, 0.175, 1) 2.65s forwards;
+}
+
+@keyframes arch-dim-expand {
+  0%   { width: 0; opacity: 0; }
+  100% { width: 100%; opacity: 1; }
+}
+
+@keyframes arch-dim-collapse {
+  0%   { width: 100%; opacity: 1; }
+  100% { width: 0; opacity: 0; }
+}
+
+/* Center text mask — removed, using stroke draw instead */
+
+/* Stroke draw — outline clips left→right, fill fades in on top */
+.stroke-draw-wrapper {
+  position: relative;
+}
+
+.stroke-draw-clip {
+  clip-path: inset(0 100% 0 0);
+  animation: stroke-clip-in 1.0s cubic-bezier(0.77, 0, 0.175, 1) 0.3s forwards,
+             stroke-clip-out 0.5s cubic-bezier(0.77, 0, 0.175, 1) 2.6s forwards;
+}
+
+.stroke-draw-outline {
+  color: transparent;
+  -webkit-text-stroke: 1px rgba(255, 255, 255, 0.8);
+}
+
+.stroke-draw-fill {
+  opacity: 0;
+  animation: stroke-fill-in 0.6s ease-out 1.1s forwards,
+             stroke-fill-out 0.4s ease-in 2.65s forwards;
+}
+
+@keyframes stroke-clip-in {
+  0%   { clip-path: inset(0 100% 0 0); }
+  100% { clip-path: inset(0 0% 0 0); }
+}
+
+@keyframes stroke-clip-out {
+  0%   { clip-path: inset(0 0% 0 0); }
+  100% { clip-path: inset(0 0% 0 100%); }
+}
+
+@keyframes stroke-fill-in {
+  0%   { opacity: 0; }
+  100% { opacity: 1; }
+}
+
+@keyframes stroke-fill-out {
+  0%   { opacity: 1; }
+  100% { opacity: 0; }
+}
+
+/* Vertical accent lines — left and right of text */
+.arch-vert {
+  position: absolute;
+  width: 1px;
+  height: 0;
+  background: rgba(255, 255, 255, 0.35);
+  top: 50%;
+}
+
+.arch-vert-left  { left: 0; transform: translateY(-50%); }
+.arch-vert-right { right: 0; transform: translateY(-50%); }
+
+.arch-vert {
+  animation: arch-vert-grow 0.5s cubic-bezier(0.77, 0, 0.175, 1) 0.4s forwards,
+             arch-vert-shrink 0.35s cubic-bezier(0.77, 0, 0.175, 1) 2.65s forwards;
+}
+
+@keyframes arch-vert-grow {
+  0%   { height: 0; opacity: 0; }
+  100% { height: 100%; opacity: 1; }
+}
+
+@keyframes arch-vert-shrink {
+  0%   { height: 100%; opacity: 1; }
+  100% { height: 0; opacity: 0; }
 }

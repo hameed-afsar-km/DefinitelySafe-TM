@@ -10,7 +10,7 @@ function framePath(i: number): string {
   return `/hero/scroll%201_${String(i).padStart(3, "0")}.webp`;
 }
 
-export default function HeroSection() {
+export default function HeroSection({ showIndicator = false }: { showIndicator?: boolean }) {
   const sectionRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const indicatorRef = useRef<HTMLDivElement>(null);
@@ -149,14 +149,27 @@ export default function HeroSection() {
     };
   }, []);
 
+  useEffect(() => {
+    if (!showIndicator) return;
+    const indicator = indicatorRef.current;
+    if (!indicator) return;
+    requestAnimationFrame(() => {
+      indicator.style.opacity = "1";
+      indicator.addEventListener("transitionend", () => {
+        indicator.style.transition = "none";
+      }, { once: true });
+    });
+  }, [showIndicator]);
+
   return (
     <div ref={sectionRef} className="relative h-[500vh]">
       <div className="sticky top-0 h-screen w-full overflow-hidden bg-black">
         <canvas ref={canvasRef} className="block h-full w-full" />
+        {showIndicator && (
         <div
           ref={indicatorRef}
           className="absolute bottom-10 left-1/2 z-20 flex flex-col items-center gap-2 text-white/70"
-          style={{ willChange: "transform, opacity" }}
+          style={{ willChange: "transform, opacity", transform: "translateX(-50%)", opacity: 0, transition: "opacity 1s ease-in" }}
         >
           <span className="text-xs tracking-[0.3em] uppercase">Scroll</span>
           <svg
@@ -178,10 +191,6 @@ export default function HeroSection() {
             <circle cx="10" cy="8" r="2" fill="currentColor" />
           </svg>
         </div>
-        {loadPct < 100 && (
-          <div className="absolute inset-0 z-10 flex items-center justify-center bg-black text-white text-sm tracking-wide">
-            {loadPct}%
-          </div>
         )}
       </div>
     </div>

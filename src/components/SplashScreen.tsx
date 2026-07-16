@@ -8,14 +8,14 @@ export default function SplashScreen({ onComplete }: { onComplete: () => void })
 
   useEffect(() => {
     let timer: ReturnType<typeof setTimeout>;
-    timer = setTimeout(() => setPhase("title"), 1200);
+    timer = setTimeout(() => setPhase("title"), 3000);
     return () => clearTimeout(timer);
   }, []);
 
   useEffect(() => {
     if (phase !== "title") return;
     let timer: ReturnType<typeof setTimeout>;
-    timer = setTimeout(() => setPhase("video"), 2200);
+    timer = setTimeout(() => setPhase("video"), 3000);
     return () => clearTimeout(timer);
   }, [phase]);
 
@@ -25,9 +25,14 @@ export default function SplashScreen({ onComplete }: { onComplete: () => void })
     if (!video) return;
     video.play().catch(() => {});
 
-    const onEnd = () => setPhase("fading");
-    video.addEventListener("ended", onEnd);
-    return () => video.removeEventListener("ended", onEnd);
+    const onTimeUpdate = () => {
+      if (video.currentTime >= video.duration - 1) {
+        setPhase("fading");
+        video.removeEventListener("timeupdate", onTimeUpdate);
+      }
+    };
+    video.addEventListener("timeupdate", onTimeUpdate);
+    return () => video.removeEventListener("timeupdate", onTimeUpdate);
   }, [phase]);
 
   useEffect(() => {
@@ -50,34 +55,69 @@ export default function SplashScreen({ onComplete }: { onComplete: () => void })
     >
       {/* Persistent background image — never unmounts until done */}
       <div
-        className="absolute inset-0 bg-cover bg-center animate-fade-in"
+        className="absolute inset-0 bg-cover bg-center splash-bg-reveal"
         style={{ backgroundImage: "url(/splash.webp)" }}
       />
 
-      {/* CONSTRUCTING text */}
+      {/* CONSTRUCTING text + loading bar */}
       {phase === "constructing" && (
         <div className="absolute inset-0 z-10 flex items-center justify-center">
-          <div className="animate-fade-in-out-short">
+          <div className="constructing-group">
             <p
-              className="text-white text-5xl md:text-7xl tracking-[0.3em] uppercase"
+              className="constructing-text text-white text-7xl md:text-[6.5rem] tracking-[0.04em] uppercase"
               style={{ fontFamily: "MuroSp, sans-serif" }}
             >
               Constructing
             </p>
+            <div className="constructing-bar-track">
+              <div className="constructing-bar-fill" />
+            </div>
           </div>
         </div>
       )}
 
-      {/* DefinitelySafe text */}
+      {/* DefinitelySafe text — stroke draw reveal */}
       {phase === "title" && (
         <div className="absolute inset-0 z-10 flex items-center justify-center">
-          <div className="animate-fade-in-out-long">
-            <p
-              className="text-white text-6xl md:text-8xl tracking-wider"
-              style={{ fontFamily: "Triac71, serif" }}
-            >
-              DefinitelySafe
-            </p>
+          <div className="arch-group">
+            <div className="arch-corner arch-corner-tl" />
+            <div className="arch-corner arch-corner-tr" />
+            <div className="arch-corner arch-corner-bl" />
+            <div className="arch-corner arch-corner-br" />
+
+            <div className="arch-dim arch-dim-top">
+              <div className="arch-dim-line" />
+              <div className="arch-dim-tick" />
+              <div className="arch-dim-tick" />
+            </div>
+
+            <div className="stroke-draw-wrapper">
+              {/* Stroke outline — clips left to right */}
+              <div className="stroke-draw-clip">
+                <p
+                  className="stroke-draw-outline text-6xl md:text-8xl tracking-wider"
+                  style={{ fontFamily: "Triac71, serif" }}
+                >
+                  DefinitelySafe
+                </p>
+              </div>
+              {/* Solid fill — fades in on top */}
+              <p
+                className="stroke-draw-fill text-white text-6xl md:text-8xl tracking-wider absolute inset-0"
+                style={{ fontFamily: "Triac71, serif" }}
+              >
+                DefinitelySafe
+              </p>
+            </div>
+
+            <div className="arch-dim arch-dim-bottom">
+              <div className="arch-dim-line" />
+              <div className="arch-dim-tick" />
+              <div className="arch-dim-tick" />
+            </div>
+
+            <div className="arch-vert arch-vert-left" />
+            <div className="arch-vert arch-vert-right" />
           </div>
         </div>
       )}
