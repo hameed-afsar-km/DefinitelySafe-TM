@@ -49,7 +49,7 @@ export default function SplashScreen({ onComplete }: { onComplete: () => void })
 
   return (
     <div
-      className={`fixed inset-0 z-50 transition-opacity duration-[3000ms] ease-out ${
+      className={`fixed inset-0 z-50 bg-black transition-opacity duration-[3000ms] ease-out ${
         phase === "fading" ? "opacity-0" : "opacity-100"
       }`}
     >
