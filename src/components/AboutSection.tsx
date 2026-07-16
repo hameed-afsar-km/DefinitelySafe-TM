@@ -26,6 +26,24 @@ function useScrollProgress(ref: React.RefObject<HTMLDivElement | null>) {
   return progress;
 }
 
+function useParallaxClip(ref: React.RefObject<HTMLDivElement | null>) {
+  const [clip, setClip] = useState(100);
+  useEffect(() => {
+    function onScroll() {
+      const el = ref.current;
+      if (!el) return;
+      const rect = el.getBoundingClientRect();
+      const vh = window.innerHeight;
+      const p = Math.max(0, Math.min(1, 1 - rect.top / vh));
+      setClip(100 - p * 100);
+    }
+    window.addEventListener("scroll", onScroll, { passive: true });
+    onScroll();
+    return () => window.removeEventListener("scroll", onScroll);
+  }, [ref]);
+  return clip;
+}
+
 function WordReveal({ text, progress }: { text: string; progress: number }) {
   const words = useMemo(() => text.split(" "), [text]);
   const total = words.length;
@@ -55,95 +73,23 @@ function WordReveal({ text, progress }: { text: string; progress: number }) {
   );
 }
 
-function useHeroTransition() {
-  const [transitionState, setTransitionState] = useState({
-    isTransitioning: false,
-    translateY: "100vh",
-    opacity: 0,
-  });
-
-  useEffect(() => {
-    function handleScroll() {
-      const scrollY = window.scrollY;
-      const h = window.innerHeight;
-      const heroScrollable = h * 4; // Hero section has h-[500vh], so scrollable range is 400vh
-      const p = Math.max(0, Math.min(1, scrollY / heroScrollable));
-      
-      const startP = 147 / 152; // 5th last frame of the hero section (starts 5 frames before ending frame)
-      
-      if (scrollY < heroScrollable) {
-        if (p >= startP) {
-          const t = (p - startP) / (1.0 - startP);
-          // Easing function for smooth slide up
-          const easeT = 1 - Math.pow(1 - t, 2.5); // smooth ease-out
-          setTransitionState({
-            isTransitioning: true,
-            translateY: `${(1 - easeT) * 100}vh`,
-            opacity: easeT,
-          });
-        } else {
-          setTransitionState({
-            isTransitioning: true,
-            translateY: "100vh",
-            opacity: 0,
-          });
-        }
-      } else {
-        setTransitionState({
-          isTransitioning: false,
-          translateY: "0px",
-          opacity: 1,
-        });
-      }
-    }
-
-    window.addEventListener("scroll", handleScroll, { passive: true });
-    handleScroll();
-    return () => window.removeEventListener("scroll", handleScroll);
-  }, []);
-
-  return transitionState;
-}
-
-function ParagraphPhase({
-  text,
-  height,
-  isFirst = false,
-}: {
-  text: string;
-  height: string;
-  isFirst?: boolean;
-}) {
+function ParagraphPhase({ text, height, isFirst = false }: { text: string; height: string; isFirst?: boolean }) {
   const ref = useRef<HTMLDivElement>(null);
   const progress = useScrollProgress(ref);
-  const heroTrans = useHeroTransition();
-
-  const isTransitioning = isFirst && heroTrans.isTransitioning;
+  const clip = useParallaxClip(ref);
 
   return (
     <div
       ref={ref}
-      className="relative w-full bg-white"
+      className="relative w-full"
       style={{ height }}
     >
       <div
-        className={
-          isTransitioning
-            ? "fixed inset-0 flex items-center justify-center overflow-hidden bg-white z-30 pointer-events-none"
-            : "sticky top-0 h-screen flex items-center justify-center overflow-hidden"
-        }
-        style={
-          isTransitioning
-            ? {
-                transform: `translateY(${heroTrans.translateY})`,
-                opacity: heroTrans.opacity,
-                willChange: "transform, opacity",
-              }
-            : undefined
-        }
+        className="sticky top-0 h-screen flex items-center justify-center overflow-hidden bg-white"
+        style={isFirst ? { clipPath: `inset(${clip}% 0 0 0)` } : undefined}
       >
         <div className="max-w-3xl mx-auto px-8">
-          <WordReveal text={text} progress={isTransitioning ? 0 : progress} />
+          <WordReveal text={text} progress={progress} />
         </div>
       </div>
     </div>

@@ -35,7 +35,7 @@ export default function Home() {
       >
         <HeroSection showIndicator={showScroll} />
       </div>
-      <div className="w-full relative" style={{ marginTop: "-100vh", zIndex: 10 }}>
+      <div className="w-full relative" style={{ marginTop: "-100vh", zIndex: 20 }}>
         <AboutSection />
       </div>
     </main>
