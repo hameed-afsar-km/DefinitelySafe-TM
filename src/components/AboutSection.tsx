@@ -44,6 +44,38 @@ function useParallaxClip(ref: React.RefObject<HTMLDivElement | null>) {
   return clip;
 }
 
+function stripPunct(w: string): string {
+  return w.toLowerCase().replace(/[^a-z0-9]/g, "");
+}
+
+const BOLD_PHRASES: string[][] = [
+  ["definitelysafe"],
+  ["precision"],
+  ["trust"],
+  ["designed", "to", "last"],
+  ["safe", "reliable"],
+  ["built", "with", "confidence"],
+  ["peace", "of", "mind"],
+];
+
+function isWordBold(words: string[], index: number): boolean {
+  for (const phrase of BOLD_PHRASES) {
+    const len = phrase.length;
+    for (let start = Math.max(0, index - len + 1); start <= index; start++) {
+      if (start + len > words.length) continue;
+      let match = true;
+      for (let j = 0; j < len; j++) {
+        if (stripPunct(words[start + j]) !== phrase[j]) {
+          match = false;
+          break;
+        }
+      }
+      if (match) return true;
+    }
+  }
+  return false;
+}
+
 function WordReveal({ text, progress }: { text: string; progress: number }) {
   const words = useMemo(() => text.split(" "), [text]);
   const total = words.length;
@@ -56,16 +88,24 @@ function WordReveal({ text, progress }: { text: string; progress: number }) {
         const mid = (start + end) / 2;
         const range = 0.4 / total;
         const opacity = Math.max(0.1, Math.min(1, (progress - mid + range) / range));
+        const bold = isWordBold(words, i);
         return (
           <span
             key={i}
             style={{
-              fontFamily: "TheSkinny, sans-serif",
+                fontFamily: bold && opacity > 0.1 ? "TheSkinnyBold, sans-serif" : "TheSkinny, sans-serif",
               opacity,
               transition: "opacity 0.15s ease-out",
             }}
           >
-            {word}{" "}
+            {word.includes("\u2122") ? (
+              <>
+                {word.split("\u2122")[0]}
+                <sup style={{ fontSize: "0.5em", marginLeft: "-0.15em", verticalAlign: "0.41em", fontWeight: 700 }}>™</sup>
+              </>
+            ) : (
+              word
+            )}{" "}
           </span>
         );
       })}

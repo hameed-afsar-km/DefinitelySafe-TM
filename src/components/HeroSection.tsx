@@ -34,7 +34,7 @@ export default function HeroSection({ showIndicator = false }: { showIndicator?:
     let lastTime = performance.now();
 
     function resizeCanvas() {
-      const dpr = window.devicePixelRatio || 1;
+      const dpr = Math.min(window.devicePixelRatio || 1, 1.5);
       canvas!.width = Math.round(window.innerWidth * dpr);
       canvas!.height = Math.round(window.innerHeight * dpr);
       canvas!.style.width = "100%";
