@@ -61,7 +61,12 @@ export default function HeroSection({ showIndicator = false }: { showIndicator?:
       const rect = section!.getBoundingClientRect();
       const scrollable = section!.offsetHeight - window.innerHeight;
       const p = Math.max(0, Math.min(1, -rect.top / scrollable));
-      targetFrame = p * (TOTAL_FRAMES - 1);
+      const scrubEndP = 142 / 152;
+      if (p <= scrubEndP) {
+        targetFrame = (p / scrubEndP) * (TOTAL_FRAMES - 1);
+      } else {
+        targetFrame = TOTAL_FRAMES - 1;
+      }
 
       const indicator = indicatorRef.current;
       if (indicator) {

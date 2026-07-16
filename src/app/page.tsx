@@ -3,6 +3,7 @@
 import { useState, useCallback, useEffect } from "react";
 import HeroSection from "@/components/HeroSection";
 import SplashScreen from "@/components/SplashScreen";
+import AboutSection from "@/components/AboutSection";
 
 export default function Home() {
   const [splashDone, setSplashDone] = useState(false);
@@ -33,6 +34,9 @@ export default function Home() {
         style={{ position: "relative", zIndex: splashDone ? 0 : -5 }}
       >
         <HeroSection showIndicator={showScroll} />
+      </div>
+      <div className="w-full relative" style={{ marginTop: "-100vh", zIndex: 10 }}>
+        <AboutSection />
       </div>
     </main>
   );
