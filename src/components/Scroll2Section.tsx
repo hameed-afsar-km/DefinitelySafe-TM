@@ -1,11 +1,14 @@
 "use client";
 
-import { useRef, useEffect, useState } from "react";
+import { useRef, useEffect, useCallback } from "react";
+import { motion, useMotionValue, useSpring, useTransform } from "framer-motion";
 
 const TOTAL_FRAMES = 42;
 const LERP_SPEED = 12;
 const BEAM_COUNT = 8;
 const TRANSITION_END = 0.3;
+
+const springConfig = { damping: 25, stiffness: 150 };
 
 function framePath(i: number): string {
   return `/scroll2/scroll%202_${String(i).padStart(3, "0")}.webp`;
@@ -15,6 +18,24 @@ export default function Scroll2Section() {
   const sectionRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const beamRefs = useRef<(HTMLDivElement | null)[]>([]);
+
+  const mouseX = useMotionValue(0);
+  const mouseY = useMotionValue(0);
+  const springX = useSpring(mouseX, springConfig);
+  const springY = useSpring(mouseY, springConfig);
+
+  const rotateX = useTransform(springY, [-0.5, 0.5], [3, -3]);
+  const rotateY = useTransform(springX, [-0.5, 0.5], [3, -3]);
+  const translateX = useTransform(springX, [-0.5, 0.5], [12, -12]);
+  const translateY = useTransform(springY, [-0.5, 0.5], [12, -12]);
+
+  const handleMouseMove = useCallback((e: React.MouseEvent) => {
+    const rect = e.currentTarget.getBoundingClientRect();
+    const x = (e.clientX - rect.left) / rect.width - 0.5;
+    const y = (e.clientY - rect.top) / rect.height - 0.5;
+    mouseX.set(x);
+    mouseY.set(y);
+  }, [mouseX, mouseY]);
 
   useEffect(() => {
     const section = sectionRef.current;
@@ -34,7 +55,6 @@ export default function Scroll2Section() {
     let lastDrawn = -1;
     let lastTime = performance.now();
     let pendingBeamP = 0;
-    let loaded = false;
 
     function resizeCanvas() {
       const dpr = Math.min(window.devicePixelRatio || 1, 1.5);
@@ -173,7 +193,6 @@ export default function Scroll2Section() {
 
     loadAll().then(() => {
       if (destroyed) return;
-      loaded = true;
       lastTime = performance.now();
       startLoop();
     });
@@ -192,8 +211,23 @@ export default function Scroll2Section() {
 
   return (
     <div ref={sectionRef} className="relative h-[400vh]">
-      <div className="sticky top-0 h-screen w-full overflow-hidden bg-black">
-        <canvas ref={canvasRef} className="block h-full w-full" />
+      <div
+        className="sticky top-0 h-screen w-full overflow-hidden bg-black"
+        onMouseMove={handleMouseMove}
+      >
+        <motion.div
+          className="w-full h-full"
+          style={{
+            perspective: 1000,
+            rotateX,
+            rotateY,
+            x: translateX,
+            y: translateY,
+            scale: 1.02,
+          }}
+        >
+          <canvas ref={canvasRef} className="block h-full w-full" />
+        </motion.div>
 
         <div className="absolute inset-0 z-10 pointer-events-none">
           {Array.from({ length: BEAM_COUNT }, (_, i) => (

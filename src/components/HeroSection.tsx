@@ -1,10 +1,13 @@
 "use client";
 
-import { useRef, useEffect, useState } from "react";
+import { useRef, useEffect, useState, useCallback } from "react";
+import { motion, useMotionValue, useSpring, useTransform } from "framer-motion";
 
 const TOTAL_FRAMES = 153;
 const LERP_SPEED = 6;
 const INDICATOR_EXIT = 0.18;
+
+const springConfig = { damping: 25, stiffness: 150 };
 
 function framePath(i: number): string {
   return `/hero/scroll%201_${String(i).padStart(3, "0")}.webp`;
@@ -15,6 +18,24 @@ export default function HeroSection({ showIndicator = false }: { showIndicator?:
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const indicatorRef = useRef<HTMLDivElement>(null);
   const [loadPct, setLoadPct] = useState(0);
+
+  const mouseX = useMotionValue(0);
+  const mouseY = useMotionValue(0);
+  const springX = useSpring(mouseX, springConfig);
+  const springY = useSpring(mouseY, springConfig);
+
+  const rotateX = useTransform(springY, [-0.5, 0.5], [3, -3]);
+  const rotateY = useTransform(springX, [-0.5, 0.5], [3, -3]);
+  const translateX = useTransform(springX, [-0.5, 0.5], [12, -12]);
+  const translateY = useTransform(springY, [-0.5, 0.5], [12, -12]);
+
+  const handleMouseMove = useCallback((e: React.MouseEvent) => {
+    const rect = e.currentTarget.getBoundingClientRect();
+    const x = (e.clientX - rect.left) / rect.width - 0.5;
+    const y = (e.clientY - rect.top) / rect.height - 0.5;
+    mouseX.set(x);
+    mouseY.set(y);
+  }, [mouseX, mouseY]);
 
   useEffect(() => {
     const section = sectionRef.current;
@@ -117,7 +138,6 @@ export default function HeroSection({ showIndicator = false }: { showIndicator?:
             const bm = await createImageBitmap(blob);
             bitmaps[i] = bm;
           } catch {
-            // retry once
             try {
               const resp = await fetch(framePath(i));
               const blob = await resp.blob();
@@ -168,8 +188,23 @@ export default function HeroSection({ showIndicator = false }: { showIndicator?:
 
   return (
     <div ref={sectionRef} className="relative h-[500vh]">
-      <div className="sticky top-0 h-screen w-full overflow-hidden bg-black">
-        <canvas ref={canvasRef} className="block h-full w-full" />
+      <div
+        className="sticky top-0 h-screen w-full overflow-hidden bg-black"
+        onMouseMove={handleMouseMove}
+      >
+        <motion.div
+          className="w-full h-full"
+          style={{
+            perspective: 1000,
+            rotateX,
+            rotateY,
+            x: translateX,
+            y: translateY,
+            scale: 1.02,
+          }}
+        >
+          <canvas ref={canvasRef} className="block h-full w-full" />
+        </motion.div>
         {showIndicator && (
         <div
           ref={indicatorRef}

@@ -5,6 +5,7 @@ import HeroSection from "@/components/HeroSection";
 import SplashScreen from "@/components/SplashScreen";
 import AboutSection from "@/components/AboutSection";
 import Scroll2Section from "@/components/Scroll2Section";
+import CatalogueSection from "@/components/CatalogueSection";
 
 function LazyMount({ children }: { children: React.ReactNode }) {
   const sentinelRef = useRef<HTMLDivElement>(null);
@@ -18,6 +19,7 @@ function LazyMount({ children }: { children: React.ReactNode }) {
         if (entry.isIntersecting) {
           setVisible(true);
           obs.disconnect();
+          requestAnimationFrame(() => window.dispatchEvent(new Event("resize")));
         }
       },
       { rootMargin: "200% 0px" }
@@ -68,8 +70,11 @@ export default function Home() {
         <AboutSection />
       </div>
       <div className="w-full relative" style={{ zIndex: 15 }}>
+        <Scroll2Section />
+      </div>
+      <div className="w-full relative" style={{ zIndex: 25 }}>
         <LazyMount>
-          <Scroll2Section />
+          <CatalogueSection />
         </LazyMount>
       </div>
     </main>
