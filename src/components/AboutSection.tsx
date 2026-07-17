@@ -81,7 +81,7 @@ function WordReveal({ text, progress }: { text: string; progress: number }) {
   const total = words.length;
 
   return (
-    <p className="text-3xl md:text-5xl lg:text-[3.5rem] leading-snug text-black">
+    <p className="text-[2.5rem] md:text-5xl lg:text-[3.5rem] leading-snug text-black">
       {words.map((word, i) => {
         const start = i / total;
         const end = (i + 1) / total;
@@ -93,7 +93,7 @@ function WordReveal({ text, progress }: { text: string; progress: number }) {
           <span
             key={i}
             style={{
-                fontFamily: bold && opacity > 0.1 ? "TheSkinnyBold, sans-serif" : "TheSkinny, sans-serif",
+              fontFamily: bold && opacity > 0.1 ? "TheSkinnyBold, sans-serif" : "TheSkinny, sans-serif",
               opacity,
               transition: "opacity 0.15s ease-out",
             }}
