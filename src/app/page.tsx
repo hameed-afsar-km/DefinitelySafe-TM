@@ -7,6 +7,8 @@ import AboutSection from "@/components/AboutSection";
 import Scroll2Section from "@/components/Scroll2Section";
 import CatalogueSection from "@/components/CatalogueSection";
 
+import CallToActionSection from "@/components/CallToActionSection";
+
 function LazyMount({ children }: { children: React.ReactNode }) {
   const sentinelRef = useRef<HTMLDivElement>(null);
   const [visible, setVisible] = useState(false);
@@ -75,6 +77,11 @@ export default function Home() {
       <div className="w-full relative" style={{ zIndex: 25 }}>
         <LazyMount>
           <CatalogueSection />
+        </LazyMount>
+      </div>
+      <div className="w-full relative" style={{ zIndex: 30 }}>
+        <LazyMount>
+          <CallToActionSection />
         </LazyMount>
       </div>
     </main>
