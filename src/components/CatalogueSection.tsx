@@ -113,10 +113,10 @@ export default function CatalogueSection() {
         y: 24,
         duration: 0.8,
         ease: "power3.out",
+        delay: i * 0.04,
         scrollTrigger: {
           trigger: row,
           start: "top 88%",
-          delay: i * 0.04,
         },
       });
     });
