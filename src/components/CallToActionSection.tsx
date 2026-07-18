@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useRef, useState } from "react";
+import React, { useRef, useState, useEffect } from "react";
 import gsap from "gsap";
 import ScrollTrigger from "gsap/ScrollTrigger";
 import { useGSAP } from "@gsap/react";
@@ -12,103 +12,200 @@ if (typeof window !== "undefined") {
 // ─────────────────────────────────────────────────────────────────────────────
 // Architectural Grid Components
 // ─────────────────────────────────────────────────────────────────────────────
-const Label = ({ text }: { text: string }) => (
-  <div style={{ width: "100%", height: "100%", backgroundColor: "#ffffff", display: "flex", padding: "10%", alignItems: "flex-end", boxSizing: "border-box" }}>
-    <span style={{ fontFamily: "'Courier New', Courier, monospace", fontSize: "5cqmin", fontWeight: "bold", color: "#000000", textTransform: "uppercase" }}>
-      {text}
-    </span>
-  </div>
-);
-
-const Cross = () => (
-  <div style={{ width: "100%", height: "100%", backgroundColor: "#ffffff", display: "flex", justifyContent: "center", alignItems: "center" }}>
-    <div style={{ position: "relative", width: "25cqmin", height: "25cqmin" }}>
-       <div style={{ position: "absolute", top: "50%", left: 0, width: "100%", height: "4px", backgroundColor: "#000000", transform: "translateY(-50%)" }} />
-       <div style={{ position: "absolute", left: "50%", top: 0, height: "100%", width: "4px", backgroundColor: "#000000", transform: "translateX(-50%)" }} />
+const Label = ({ text, isHovered }: { text: string, isHovered?: boolean }) => {
+  return (
+    <div style={{ width: "100%", height: "100%", backgroundColor: "#ffffff", display: "flex", padding: "10%", alignItems: "flex-end", boxSizing: "border-box", overflow: "hidden" }}>
+      <div style={{ position: "relative", height: "5cqmin", overflow: "hidden" }}>
+        {/* Primary Text */}
+        <span style={{ 
+           fontFamily: "'Courier New', Courier, monospace", fontSize: "5cqmin", fontWeight: "bold", color: "#000000", textTransform: "uppercase", 
+           display: "block",
+           lineHeight: 1,
+           transition: "transform 0.6s cubic-bezier(0.25, 1, 0.5, 1)",
+           transform: isHovered ? "translateY(-100%)" : "translateY(0%)"
+        }}>
+          {text}
+        </span>
+        {/* Secondary Text (Hidden below) */}
+        <span style={{ 
+           fontFamily: "'Courier New', Courier, monospace", fontSize: "5cqmin", fontWeight: "bold", color: "#000000", textTransform: "uppercase", 
+           display: "block", position: "absolute", top: 0, left: 0,
+           lineHeight: 1,
+           transition: "transform 0.6s cubic-bezier(0.25, 1, 0.5, 1)",
+           transform: isHovered ? "translateY(0%)" : "translateY(100%)"
+        }}>
+          {text}
+        </span>
+      </div>
     </div>
-  </div>
-);
+  );
+};
 
-const Stripes = () => (
-  <div style={{
-    width: "100%", height: "100%",
-    background: "repeating-linear-gradient(45deg, #000000 0, #000000 2px, #ffffff 2px, #ffffff 12px)"
-  }} />
-);
+const Cross = ({ isHovered }: { isHovered?: boolean }) => {
+  return (
+    <div style={{ width: "100%", height: "100%", backgroundColor: "#ffffff", display: "flex", justifyContent: "center", alignItems: "center" }}>
+      <div style={{ 
+        position: "relative", width: "25cqmin", height: "25cqmin",
+        transition: "transform 0.6s cubic-bezier(0.25, 1, 0.5, 1)",
+        transform: isHovered ? "rotate(135deg)" : "rotate(0deg)" 
+      }}>
+         <div style={{ 
+            position: "absolute", top: "50%", left: isHovered ? "25%" : 0, width: isHovered ? "50%" : "100%", height: isHovered ? "50%" : "4px", backgroundColor: "#000000", marginTop: isHovered ? "-12.5cqmin" : "-2px",
+            borderRadius: isHovered ? "50%" : "0%", transition: "all 0.6s cubic-bezier(0.25, 1, 0.5, 1)" 
+         }} />
+         <div style={{ 
+            position: "absolute", left: "50%", top: isHovered ? "25%" : 0, height: isHovered ? "50%" : "100%", width: isHovered ? "50%" : "4px", backgroundColor: "#000000", marginLeft: isHovered ? "-12.5cqmin" : "-2px",
+            borderRadius: isHovered ? "50%" : "0%", transition: "all 0.6s cubic-bezier(0.25, 1, 0.5, 1)" 
+         }} />
+      </div>
+    </div>
+  );
+};
 
-const CellText = ({ text, highlight }: { text: string, highlight?: boolean }) => (
-  <div style={{ 
-    width: "100%", height: "100%", 
-    display: "flex", justifyContent: "center", alignItems: "center",
-    backgroundColor: highlight ? "#000000" : "#ffffff",
-    color: highlight ? "#ffffff" : "#000000",
-  }}>
-    <h2 style={{ 
-       fontSize: "12cqmin", // Uses Container Queries to perfectly scale typography based on room size!
-       fontWeight: 900, 
-       margin: 0, 
-       whiteSpace: "nowrap",
-       fontFamily: "var(--font-geist-sans), sans-serif",
-       letterSpacing: "-0.04em",
+const Stripes = ({ isHovered }: { isHovered?: boolean }) => {
+  return (
+    <div style={{ width: "100%", height: "100%", overflow: "hidden", display: "flex", justifyContent: "center", alignItems: "center" }}>
+      <div style={{
+        width: "200%", height: "200%",
+        background: "repeating-linear-gradient(0deg, #000000 0, #000000 2px, #ffffff 2px, #ffffff 12px)",
+        transition: "transform 0.6s cubic-bezier(0.25, 1, 0.5, 1)",
+        transform: isHovered ? "rotate(90deg) scale(1.2)" : "rotate(45deg) scale(1)",
+      }} />
+    </div>
+  );
+};
+
+const CellText = ({ text, highlight, isHovered }: { text: string, highlight?: boolean, isHovered?: boolean }) => {
+  return (
+    <div style={{ 
+      width: "100%", height: "100%", 
+      display: "flex", justifyContent: "center", alignItems: "center",
+      backgroundColor: highlight ? (isHovered ? "#ffffff" : "#000000") : (isHovered ? "#000000" : "#ffffff"),
+      transition: "background-color 0.6s cubic-bezier(0.25, 1, 0.5, 1)",
     }}>
-      {text}
-    </h2>
-  </div>
-);
+      <h2 style={{ 
+         fontSize: "12cqmin", 
+         fontWeight: 900, 
+         margin: 0, 
+         whiteSpace: "nowrap",
+         fontFamily: "var(--font-geist-sans), sans-serif",
+         letterSpacing: "-0.04em",
+         transition: "all 0.6s cubic-bezier(0.25, 1, 0.5, 1)",
+         WebkitTextStroke: isHovered ? (highlight ? "2px #000000" : "2px #ffffff") : "0px transparent",
+         color: isHovered ? "transparent" : (highlight ? "#ffffff" : "#000000"),
+         transform: isHovered ? "scale(1.1)" : "scale(1)"
+      }}>
+        {text}
+      </h2>
+    </div>
+  );
+};
 
-const CtaCell = () => (
-  <div style={{ width: "100%", height: "100%", display: "flex", justifyContent: "center", alignItems: "center", backgroundColor: "#ffffff", padding: "10%" }}>
-     <button style={{
-        background: "#000000", color: "#ffffff", border: "4px solid #000000",
-        width: "100%", height: "100%", 
-        fontSize: "8cqmin", fontWeight: 900,
-        fontFamily: "'Courier New', Courier, monospace",
-        cursor: "pointer", textTransform: "uppercase",
-        transition: "all 0.3s ease"
-     }}
-     onMouseEnter={(e) => {
-        e.currentTarget.style.background = "#ffffff";
-        e.currentTarget.style.color = "#000000";
-     }}
-     onMouseLeave={(e) => {
-        e.currentTarget.style.background = "#000000";
-        e.currentTarget.style.color = "#ffffff";
-     }}>
-        EXECUTE
-     </button>
-  </div>
-);
+const GsapAnimationCell = () => {
+  const cellRef = useRef<HTMLDivElement>(null);
+  const ring1Ref = useRef<HTMLDivElement>(null);
+  const ring2Ref = useRef<HTMLDivElement>(null);
+  const ring3Ref = useRef<HTMLDivElement>(null);
+  const dotRef = useRef<HTMLDivElement>(null);
+  const crossRef = useRef<HTMLDivElement>(null);
+
+  useGSAP(() => {
+    // Radar pulse — rings expand outward and fade, staggered
+    [ring1Ref, ring2Ref, ring3Ref].forEach((ref, i) => {
+      gsap.fromTo(ref.current,
+        { scale: 0.3, opacity: 0.8 },
+        {
+          scale: 1.3,
+          opacity: 0,
+          duration: 2.5,
+          repeat: -1,
+          ease: "power1.out",
+          delay: i * 0.7,
+        }
+      );
+    });
+
+    // Central dot breathing
+    gsap.to(dotRef.current, {
+      scale: 1.4,
+      duration: 1.5,
+      repeat: -1,
+      yoyo: true,
+      ease: "sine.inOut",
+    });
+
+    // Slow rotating crosshair
+    gsap.to(crossRef.current, {
+      rotation: 360,
+      duration: 12,
+      repeat: -1,
+      ease: "none",
+    });
+  }, { scope: cellRef });
+
+  return (
+    <div ref={cellRef} style={{
+      width: "100%", height: "100%",
+      display: "flex", justifyContent: "center", alignItems: "center",
+      backgroundColor: "#ffffff", padding: "10%",
+      position: "relative", overflow: "hidden",
+    }}>
+      {/* Radar pulse rings */}
+      <div ref={ring1Ref} style={{ position: "absolute", width: "45%", height: "45%", border: "2px solid #000000", borderRadius: "50%" }} />
+      <div ref={ring2Ref} style={{ position: "absolute", width: "45%", height: "45%", border: "2px solid #000000", borderRadius: "50%" }} />
+      <div ref={ring3Ref} style={{ position: "absolute", width: "45%", height: "45%", border: "2px solid #000000", borderRadius: "50%" }} />
+
+      {/* Rotating crosshair */}
+      <div ref={crossRef} style={{
+        position: "absolute",
+        width: "55%", height: "55%",
+      }}>
+        <div style={{ position: "absolute", top: "50%", left: 0, width: "100%", height: "1.5px", backgroundColor: "#000000", transform: "translateY(-50%)" }} />
+        <div style={{ position: "absolute", left: "50%", top: 0, width: "1.5px", height: "100%", backgroundColor: "#000000", transform: "translateX(-50%)" }} />
+      </div>
+
+      {/* Central pulsing dot */}
+      <div ref={dotRef} style={{
+        width: "10%", height: "10%",
+        backgroundColor: "#000000",
+        borderRadius: "50%",
+        zIndex: 1,
+      }} />
+    </div>
+  );
+};
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Floorplan Layout Matrix
 // ─────────────────────────────────────────────────────────────────────────────
 const gridLayout = [
   // ROW 1
-  { id: "0-0", content: <Cross /> },
-  { id: "0-1", content: <Label text="01. REACTION" /> },
-  { id: "0-2", content: <Stripes /> },
-  { id: "0-3", content: <CellText text="LOVE IT?" /> },
+  { id: "0-0", render: (isHovered: boolean) => <Cross isHovered={isHovered} /> },
+  { id: "0-1", render: (isHovered: boolean) => <Label text="01. REACTION" isHovered={isHovered} /> },
+  { id: "0-2", render: (isHovered: boolean) => <Stripes isHovered={isHovered} /> },
+  { id: "0-3", render: (isHovered: boolean) => <CellText text="LOVE IT?" isHovered={isHovered} /> },
   
   // ROW 2
-  { id: "1-0", content: <Stripes /> },
-  { id: "1-1", content: <Label text="SEC: ALPHA" /> },
-  { id: "1-2", content: <Label text="02. FEELING" /> },
-  { id: "1-3", content: <CellText text="INSPIRING?" highlight /> },
+  { id: "1-0", render: (isHovered: boolean) => <Stripes isHovered={isHovered} /> },
+  { id: "1-1", render: (isHovered: boolean) => <Label text="SEC: ALPHA" isHovered={isHovered} /> },
+  { id: "1-2", render: (isHovered: boolean) => <Label text="02. FEELING" isHovered={isHovered} /> },
+  { id: "1-3", render: (isHovered: boolean) => <CellText text="INSPIRING?" highlight isHovered={isHovered} /> },
   
   // ROW 3
-  { id: "2-0", content: <CellText text="LET'S GET" highlight /> },
-  { id: "2-1", content: <Stripes /> },
-  { id: "2-2", content: <Cross /> },
-  { id: "2-3", content: <CellText text="CONSTRUCTED!" /> },
+  { id: "2-0", render: (isHovered: boolean) => <CellText text="LET'S GET" highlight isHovered={isHovered} /> },
+  { id: "2-1", render: (isHovered: boolean) => <Stripes isHovered={isHovered} /> },
+  { id: "2-2", render: (isHovered: boolean) => <Cross isHovered={isHovered} /> },
+  { id: "2-3", render: (isHovered: boolean) => <CellText text="CONSTRUCTED!" isHovered={isHovered} /> },
   
   // ROW 4
-  { id: "3-0", content: <Label text="03. ACTION" /> },
-  { id: "3-1", content: <Label text="ELEV: 400M" /> },
-  { id: "3-2", content: <Stripes /> },
-  { id: "3-3", content: <CtaCell /> },
+  { id: "3-0", render: (isHovered: boolean) => <Label text="03. ACTION" isHovered={isHovered} /> },
+  { id: "3-1", render: (isHovered: boolean) => <Label text="ELEV: 400M" isHovered={isHovered} /> },
+  { id: "3-2", render: (isHovered: boolean) => <Stripes isHovered={isHovered} /> },
+  { id: "3-3", render: () => <GsapAnimationCell /> },
 ];
 
 export default function CallToActionSection() {
+  const containerRef = useRef<HTMLDivElement>(null);
   const sectionRef = useRef<HTMLDivElement>(null);
 
   // Tracks which room the user is hovering to expand the floorplan
@@ -119,14 +216,35 @@ export default function CallToActionSection() {
   // SCROLL BASED ANIMATION (The Construction Assembly)
   // ─────────────────────────────────────────────────────────────────────────────
   useGSAP(() => {
-    // Start the rooms as dots
+    // Start the rooms as small dots waiting for the shutter to open
     gsap.set(".grid-cell", { scale: 0, borderRadius: "50%", opacity: 0 });
 
+    // 1. Entrance Transition (Targeting Scope / Iris Reveal)
+    // The grid is revealed through an expanding circular mask, like a camera lens opening
+    gsap.fromTo(".floorplan-grid", 
+      { 
+        clipPath: "circle(0% at 50% 50%)",
+        scale: 0.8
+      },
+      {
+        scrollTrigger: {
+          trigger: sectionRef.current,
+          start: "top bottom",
+          end: "top top",
+          scrub: true,
+        },
+        clipPath: "circle(150% at 50% 50%)", // 150% ensures it fully clears the corners
+        scale: 1,
+        ease: "power1.inOut"
+      }
+    );
+
+    // 2. The Assembly Animation (Pins and expands)
     const tl = gsap.timeline({
       scrollTrigger: {
         trigger: sectionRef.current,
         start: "top top",
-        end: "+=150%", // Pin for interaction
+        end: "+=60%", // Pin just long enough for the assembly animation
         scrub: false, 
         pin: true,
         toggleActions: "play none none reverse" // Assemble on scroll down, deconstruct on scroll up
@@ -174,35 +292,35 @@ export default function CallToActionSection() {
       }}
     >
       <div style={{ padding: "5vh 5vw", width: "100%", height: "100%", boxSizing: "border-box" }}>
-        
-        {/* ── THE ELASTIC FLOORPLAN ── */}
-        <div 
-          className="floorplan-grid"
-          style={gridStyle}
-          // Reset grid physics when mouse leaves the entire floorplan
-          onMouseLeave={() => { setActiveCol(-1); setActiveRow(-1); }}
-        >
-          {gridLayout.map((cell, i) => {
-            const row = Math.floor(i / 4);
-            const col = i % 4;
-            return (
-              <div 
-                key={cell.id}
-                className="grid-cell"
-                onMouseEnter={() => { setActiveCol(col); setActiveRow(row); }}
-                style={{
-                  containerType: "inline-size", // CRITICAL: Enables CSS Container Queries for fluid typography!
-                  width: "100%", height: "100%",
-                  overflow: "hidden", 
-                  backgroundColor: "#ffffff", // Default room color
-                }}
-              >
-                {cell.content}
-              </div>
-            )
-          })}
-        </div>
-
+          
+          {/* ── THE ELASTIC FLOORPLAN ── */}
+          <div 
+            className="floorplan-grid"
+            style={gridStyle}
+            // Reset grid physics when mouse leaves the entire floorplan
+            onMouseLeave={() => { setActiveCol(-1); setActiveRow(-1); }}
+          >
+            {gridLayout.map((cell, i) => {
+              const row = Math.floor(i / 4);
+              const col = i % 4;
+              const isHovered = activeCol === col && activeRow === row;
+              return (
+                <div 
+                  key={cell.id}
+                  className="grid-cell"
+                  onMouseEnter={() => { setActiveCol(col); setActiveRow(row); }}
+                  style={{
+                    containerType: "inline-size", // CRITICAL: Enables CSS Container Queries for fluid typography!
+                    width: "100%", height: "100%",
+                    overflow: "hidden", 
+                    backgroundColor: "#ffffff", // Default room color
+                  }}
+                >
+                  {cell.render(isHovered)}
+                </div>
+              )
+            })}
+      </div>
       </div>
     </section>
   );

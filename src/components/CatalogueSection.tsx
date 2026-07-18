@@ -3,6 +3,7 @@
 import React, { useRef, useEffect, useState } from "react";
 import Image from "next/image";
 import gsap from "gsap";
+
 import ScrollTrigger from "gsap/ScrollTrigger";
 import { useGSAP } from "@gsap/react";
 
@@ -55,6 +56,7 @@ export default function CatalogueSection() {
   const rowsRef = useRef<(HTMLDivElement | null)[]>([]);
   const imagesRef = useRef<(HTMLDivElement | null)[]>([]);
   const [activeIndex, setActiveIndex] = useState<number | null>(null);
+  const [prevIndex, setPrevIndex] = useState<number | null>(null); // tracks last hovered tile for zIndex
   const prevIndexRef = useRef<number | null>(null); // tracks last hovered tile
   const listRef = useRef<HTMLDivElement>(null);
   const rafRef = useRef<number>(0);
@@ -78,7 +80,7 @@ export default function CatalogueSection() {
         if (rect) {
           gsap.set(followerRef.current, {
             x: curRef.current.x - rect.left - 170,
-            y: curRef.current.y - rect.top - 220,
+            y: curRef.current.y - rect.top - 170,
           });
         }
       }
@@ -139,6 +141,8 @@ export default function CatalogueSection() {
   // Called when entering any row
   const handleRowEnter = (i: number) => {
     const prev = prevIndexRef.current;
+    if (prev === i) return; // ignore if re-entering the same row
+    setPrevIndex(prev); // Store old active index for React render (keeps z-index high)
     setActiveIndex(i);
     prevIndexRef.current = i;
 
@@ -215,6 +219,7 @@ export default function CatalogueSection() {
           });
           if (followerRef.current) gsap.set(followerRef.current, { opacity: 0 });
           prevIndexRef.current = null;
+          setPrevIndex(null);
         },
       });
     }
@@ -240,7 +245,7 @@ export default function CatalogueSection() {
           top: 0,
           left: 0,
           width: "340px",
-          height: "440px",
+          height: "340px",
           pointerEvents: "none",
           zIndex: 50,
           opacity: 0, // starts invisible
@@ -280,7 +285,7 @@ export default function CatalogueSection() {
                 inset: 0,
                 clipPath: "inset(100% 0% 0% 0%)", // hidden by default; GSAP reveals
                 // Keep active or last-active on top so wipe transitions look correct
-                zIndex: activeIndex === i ? 3 : prevIndexRef.current === i ? 2 : 1,
+                zIndex: activeIndex === i ? 3 : prevIndex === i ? 2 : 1,
               }}
             >
               <Image
