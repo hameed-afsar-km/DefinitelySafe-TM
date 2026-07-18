@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useRef } from "react";
+import React, { useRef, useState } from "react";
 import gsap from "gsap";
 import ScrollTrigger from "gsap/ScrollTrigger";
 import { useGSAP } from "@gsap/react";
@@ -9,122 +9,157 @@ if (typeof window !== "undefined") {
   gsap.registerPlugin(ScrollTrigger);
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// Architectural Grid Components
+// ─────────────────────────────────────────────────────────────────────────────
+const Label = ({ text }: { text: string }) => (
+  <div style={{ width: "100%", height: "100%", backgroundColor: "#ffffff", display: "flex", padding: "10%", alignItems: "flex-end", boxSizing: "border-box" }}>
+    <span style={{ fontFamily: "'Courier New', Courier, monospace", fontSize: "5cqmin", fontWeight: "bold", color: "#000000", textTransform: "uppercase" }}>
+      {text}
+    </span>
+  </div>
+);
+
+const Cross = () => (
+  <div style={{ width: "100%", height: "100%", backgroundColor: "#ffffff", display: "flex", justifyContent: "center", alignItems: "center" }}>
+    <div style={{ position: "relative", width: "25cqmin", height: "25cqmin" }}>
+       <div style={{ position: "absolute", top: "50%", left: 0, width: "100%", height: "4px", backgroundColor: "#000000", transform: "translateY(-50%)" }} />
+       <div style={{ position: "absolute", left: "50%", top: 0, height: "100%", width: "4px", backgroundColor: "#000000", transform: "translateX(-50%)" }} />
+    </div>
+  </div>
+);
+
+const Stripes = () => (
+  <div style={{
+    width: "100%", height: "100%",
+    background: "repeating-linear-gradient(45deg, #000000 0, #000000 2px, #ffffff 2px, #ffffff 12px)"
+  }} />
+);
+
+const CellText = ({ text, highlight }: { text: string, highlight?: boolean }) => (
+  <div style={{ 
+    width: "100%", height: "100%", 
+    display: "flex", justifyContent: "center", alignItems: "center",
+    backgroundColor: highlight ? "#000000" : "#ffffff",
+    color: highlight ? "#ffffff" : "#000000",
+  }}>
+    <h2 style={{ 
+       fontSize: "12cqmin", // Uses Container Queries to perfectly scale typography based on room size!
+       fontWeight: 900, 
+       margin: 0, 
+       whiteSpace: "nowrap",
+       fontFamily: "var(--font-geist-sans), sans-serif",
+       letterSpacing: "-0.04em",
+    }}>
+      {text}
+    </h2>
+  </div>
+);
+
+const CtaCell = () => (
+  <div style={{ width: "100%", height: "100%", display: "flex", justifyContent: "center", alignItems: "center", backgroundColor: "#ffffff", padding: "10%" }}>
+     <button style={{
+        background: "#000000", color: "#ffffff", border: "4px solid #000000",
+        width: "100%", height: "100%", 
+        fontSize: "8cqmin", fontWeight: 900,
+        fontFamily: "'Courier New', Courier, monospace",
+        cursor: "pointer", textTransform: "uppercase",
+        transition: "all 0.3s ease"
+     }}
+     onMouseEnter={(e) => {
+        e.currentTarget.style.background = "#ffffff";
+        e.currentTarget.style.color = "#000000";
+     }}
+     onMouseLeave={(e) => {
+        e.currentTarget.style.background = "#000000";
+        e.currentTarget.style.color = "#ffffff";
+     }}>
+        EXECUTE
+     </button>
+  </div>
+);
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Floorplan Layout Matrix
+// ─────────────────────────────────────────────────────────────────────────────
+const gridLayout = [
+  // ROW 1
+  { id: "0-0", content: <Cross /> },
+  { id: "0-1", content: <Label text="01. REACTION" /> },
+  { id: "0-2", content: <Stripes /> },
+  { id: "0-3", content: <CellText text="LOVE IT?" /> },
+  
+  // ROW 2
+  { id: "1-0", content: <Stripes /> },
+  { id: "1-1", content: <Label text="SEC: ALPHA" /> },
+  { id: "1-2", content: <Label text="02. FEELING" /> },
+  { id: "1-3", content: <CellText text="INSPIRING?" highlight /> },
+  
+  // ROW 3
+  { id: "2-0", content: <CellText text="LET'S GET" highlight /> },
+  { id: "2-1", content: <Stripes /> },
+  { id: "2-2", content: <Cross /> },
+  { id: "2-3", content: <CellText text="CONSTRUCTED!" /> },
+  
+  // ROW 4
+  { id: "3-0", content: <Label text="03. ACTION" /> },
+  { id: "3-1", content: <Label text="ELEV: 400M" /> },
+  { id: "3-2", content: <Stripes /> },
+  { id: "3-3", content: <CtaCell /> },
+];
+
 export default function CallToActionSection() {
   const sectionRef = useRef<HTMLDivElement>(null);
-  const boxRef = useRef<HTMLDivElement>(null);
 
+  // Tracks which room the user is hovering to expand the floorplan
+  const [activeCol, setActiveCol] = useState(-1);
+  const [activeRow, setActiveRow] = useState(-1);
+
+  // ─────────────────────────────────────────────────────────────────────────────
+  // SCROLL BASED ANIMATION (The Construction Assembly)
+  // ─────────────────────────────────────────────────────────────────────────────
   useGSAP(() => {
-    
-    // Initial 3D angle of the box
-    gsap.set(boxRef.current, { rotationX: -10, rotationY: -25 });
-
-    // Ensure the CTA button is hidden initially
-    gsap.set(".cta-button", { opacity: 0, scale: 0.5 });
+    // Start the rooms as dots
+    gsap.set(".grid-cell", { scale: 0, borderRadius: "50%", opacity: 0 });
 
     const tl = gsap.timeline({
       scrollTrigger: {
         trigger: sectionRef.current,
         start: "top top",
-        end: "+=500%", // Long scroll to fully enjoy the rotations
-        scrub: 1,
+        end: "+=150%", // Pin for interaction
+        scrub: false, 
         pin: true,
-        anticipatePin: 1,
+        toggleActions: "play none none reverse" // Assemble on scroll down, deconstruct on scroll up
       }
     });
 
-    // Hold at start so user can read "Love It?"
-    tl.to({}, { duration: 0.5 });
-
-    // --- ROTATION 1: Spin to "Inspiring?" (Right Face) ---
-    tl.to(boxRef.current, {
-      rotationX: 0,
-      rotationY: -90,
-      duration: 2,
-      ease: "power2.inOut"
-    });
-
-    // Hold on "Inspiring?"
-    tl.to({}, { duration: 0.6 });
-
-    // --- ROTATION 2: Spin to "Let's Get Constructed!" (Back Face) ---
-    tl.to(boxRef.current, {
-      rotationX: 8, // slight upward tilt for dramatic effect
-      rotationY: -180,
-      duration: 2,
-      ease: "power2.inOut"
-    });
-
-    // Hold on "Let's Get Constructed!" before explosion
-    tl.to({}, { duration: 0.6 });
-
-    // --- EXPLOSION: The Monolith shatters open! ---
-    
-    // Front and Back fly out along Z
-    tl.to(".face-front", { transform: "translate(-50%, -50%) rotateY(0deg) translateZ(120vw)", opacity: 0, duration: 1.5, ease: "power3.in" }, "explode");
-    tl.to(".face-back", { transform: "translate(-50%, -50%) rotateY(180deg) translateZ(120vw)", opacity: 0, duration: 1.5, ease: "power3.in" }, "explode");
-    
-    // Left and Right fly out along X
-    tl.to(".face-right", { transform: "translate(-50%, -50%) rotateY(90deg) translateZ(120vw)", opacity: 0, duration: 1.5, ease: "power3.in" }, "explode");
-    tl.to(".face-left", { transform: "translate(-50%, -50%) rotateY(-90deg) translateZ(120vw)", opacity: 0, duration: 1.5, ease: "power3.in" }, "explode");
-    
-    // Top and Bottom fly out along Y
-    tl.to(".face-top", { transform: "translate(-50%, -50%) rotateX(90deg) translateZ(120vh)", opacity: 0, duration: 1.5, ease: "power3.in" }, "explode");
-    tl.to(".face-bottom", { transform: "translate(-50%, -50%) rotateX(-90deg) translateZ(120vh)", opacity: 0, duration: 1.5, ease: "power3.in" }, "explode");
-
-    // The CTA button (trapped inside) blooms into view!
-    tl.to(".cta-button", {
-      opacity: 1,
+    // Snap the rooms into a rigid structural grid from the center outwards
+    tl.to(".grid-cell", {
       scale: 1,
-      duration: 1.5,
-      ease: "back.out(1.5)"
-    }, "explode+=0.4");
-
-    // Hold finale
-    tl.to({}, { duration: 1 });
+      opacity: 1,
+      borderRadius: "0%", // Morphs from a dot into a rigid architectural block
+      duration: 1.2,
+      stagger: { amount: 1, grid: [4, 4], from: "center" }, 
+      ease: "power4.out"
+    });
 
   }, { scope: sectionRef });
 
-  // Geometry variables
-  const W = "60vw";
-  const H = "70vh";
-  const halfW = "30vw";
-  const halfH = "35vh";
-
-  // Common styles for all 6 faces of the 3D box
-  const faceStyle: React.CSSProperties = {
-    position: "absolute",
-    top: "50%",
-    left: "50%",
-    backgroundColor: "rgba(10, 10, 12, 0.6)", // Dark translucent glass
-    backdropFilter: "blur(16px)",             // Frosted glass effect
-    WebkitBackdropFilter: "blur(16px)",
-    border: "1px solid rgba(255,255,255,0.1)",
-    boxShadow: "inset 0 0 100px rgba(0,0,0,0.9)", // Deep inner shadow
-    display: "flex",
-    flexDirection: "column",
-    alignItems: "center",
-    justifyContent: "center",
-    backfaceVisibility: "visible", // Allows you to see the back of the glass through the box!
-  };
-
-  const headingStyle: React.CSSProperties = {
-    fontFamily: "var(--font-geist-sans), sans-serif",
-    fontWeight: 800,
-    letterSpacing: "-0.04em",
-    lineHeight: 0.9,
-    margin: 0,
-    color: "#ffffff",
-    textAlign: "center",
-  };
-
-  const eyebrowStyle: React.CSSProperties = {
-    fontFamily: "var(--font-geist-sans), sans-serif",
-    fontSize: "0.7rem",
-    fontWeight: 700,
-    letterSpacing: "0.4em",
-    textTransform: "uppercase",
-    color: "rgba(255,255,255,0.4)",
-    marginBottom: "1.5rem",
+  // ─────────────────────────────────────────────────────────────────────────────
+  // DYNAMIC GRID PHYSICS
+  // ─────────────────────────────────────────────────────────────────────────────
+  const gridStyle: React.CSSProperties = {
+    display: "grid",
+    // Elastic Grid Math: Expands the hovered column/row to 2.5x size, shrinks others
+    gridTemplateColumns: [0, 1, 2, 3].map(i => i === activeCol ? "2.5fr" : "1fr").join(" "),
+    gridTemplateRows: [0, 1, 2, 3].map(i => i === activeRow ? "2.5fr" : "1fr").join(" "),
+    transition: "grid-template-columns 0.6s cubic-bezier(0.25, 1, 0.5, 1), grid-template-rows 0.6s cubic-bezier(0.25, 1, 0.5, 1)",
+    width: "100%",
+    height: "100%",
+    border: "4px solid #000000",
+    backgroundColor: "#000000", // Shows through the gaps as thick structural walls
+    gap: "4px",
+    boxSizing: "border-box",
   };
 
   return (
@@ -132,104 +167,43 @@ export default function CallToActionSection() {
       ref={sectionRef}
       style={{
         height: "100vh",
-        position: "relative",
+        width: "100vw",
+        backgroundColor: "#ffffff",
         zIndex: 40,
-        backgroundColor: "#030303",
-        overflow: "hidden",
+        position: "relative",
       }}
     >
-      
-      {/* ── 3D VIEWPORT ── */}
-      <div 
-        style={{
-          position: "absolute",
-          inset: 0,
-          perspective: "2000px", // Deep perspective to make the box look massive
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-        }}
-      >
+      <div style={{ padding: "5vh 5vw", width: "100%", height: "100%", boxSizing: "border-box" }}>
         
-        {/* ── THE MONOLITH (3D BOX CONTAINER) ── */}
+        {/* ── THE ELASTIC FLOORPLAN ── */}
         <div 
-          ref={boxRef}
-          style={{
-            position: "relative",
-            width: 0, 
-            height: 0, 
-            transformStyle: "preserve-3d",
-          }}
+          className="floorplan-grid"
+          style={gridStyle}
+          // Reset grid physics when mouse leaves the entire floorplan
+          onMouseLeave={() => { setActiveCol(-1); setActiveRow(-1); }}
         >
-          
-          {/* ── THE PRIZE: CTA Button hidden inside the box ── */}
-          {/* It rotates 180deg so it perfectly faces the camera when the box shows the Back Face */}
-          <div className="cta-button" style={{ 
-            position: "absolute", 
-            top: "50%", left: "50%", 
-            transform: "translate(-50%, -50%) rotateY(180deg)", 
-            zIndex: 100 
-          }}>
-            <button
-              style={{
-                fontFamily: "var(--font-geist-sans), sans-serif",
-                fontWeight: 700,
-                fontSize: "1rem",
-                letterSpacing: "0.2em",
-                textTransform: "uppercase",
-                color: "#000000",
-                backgroundColor: "#ffffff",
-                border: "none",
-                padding: "1.5rem 4.5rem",
-                borderRadius: "100px",
-                cursor: "pointer",
-                boxShadow: "0 0 60px rgba(255,255,255,0.4)", // Glowing aura
-                transition: "transform 0.3s ease, background 0.3s ease",
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.backgroundColor = "#e0e0e0";
-                e.currentTarget.style.transform = "scale(1.05)";
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.backgroundColor = "#ffffff";
-                e.currentTarget.style.transform = "scale(1)";
-              }}
-            >
-              Start Your Project
-            </button>
-          </div>
-
-
-          {/* ── FACE 1: FRONT (Love It?) ── */}
-          <div className="face-front" style={{ ...faceStyle, width: W, height: H, transform: `translate(-50%, -50%) rotateY(0deg) translateZ(${halfW})` }}>
-            <p style={eyebrowStyle}>01 — The Reaction</p>
-            <h2 style={{ ...headingStyle, fontSize: "clamp(6rem, 12vw, 10rem)" }}>Love It?</h2>
-          </div>
-
-          {/* ── FACE 2: RIGHT (Inspiring?) ── */}
-          <div className="face-right" style={{ ...faceStyle, width: W, height: H, transform: `translate(-50%, -50%) rotateY(90deg) translateZ(${halfW})` }}>
-            <p style={eyebrowStyle}>02 — The Feeling</p>
-            <h2 style={{ ...headingStyle, fontSize: "clamp(5rem, 10vw, 8rem)" }}>Inspiring?</h2>
-          </div>
-
-          {/* ── FACE 3: BACK (Let's Get Constructed!) ── */}
-          <div className="face-back" style={{ ...faceStyle, width: W, height: H, transform: `translate(-50%, -50%) rotateY(180deg) translateZ(${halfW})` }}>
-            <p style={eyebrowStyle}>03 — Your Next Move</p>
-            <h2 style={{ ...headingStyle, fontSize: "clamp(4rem, 8vw, 7rem)" }}>Let's Get<br/>Constructed!</h2>
-          </div>
-
-          {/* ── FACE 4: LEFT (Blank glass) ── */}
-          <div className="face-left" style={{ ...faceStyle, width: W, height: H, transform: `translate(-50%, -50%) rotateY(-90deg) translateZ(${halfW})` }} />
-
-          {/* ── FACE 5: TOP (Blank glass) ── */}
-          <div className="face-top" style={{ ...faceStyle, width: W, height: W, transform: `translate(-50%, -50%) rotateX(90deg) translateZ(${halfH})` }} />
-
-          {/* ── FACE 6: BOTTOM (Blank glass) ── */}
-          <div className="face-bottom" style={{ ...faceStyle, width: W, height: W, transform: `translate(-50%, -50%) rotateX(-90deg) translateZ(${halfH})` }} />
-
+          {gridLayout.map((cell, i) => {
+            const row = Math.floor(i / 4);
+            const col = i % 4;
+            return (
+              <div 
+                key={cell.id}
+                className="grid-cell"
+                onMouseEnter={() => { setActiveCol(col); setActiveRow(row); }}
+                style={{
+                  containerType: "inline-size", // CRITICAL: Enables CSS Container Queries for fluid typography!
+                  width: "100%", height: "100%",
+                  overflow: "hidden", 
+                  backgroundColor: "#ffffff", // Default room color
+                }}
+              >
+                {cell.content}
+              </div>
+            )
+          })}
         </div>
-      </div>
 
+      </div>
     </section>
   );
 }
