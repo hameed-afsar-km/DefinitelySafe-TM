@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useRef, useState, useEffect } from "react";
+import React, { useRef, useState } from "react";
 import gsap from "gsap";
 import ScrollTrigger from "gsap/ScrollTrigger";
 import { useGSAP } from "@gsap/react";
@@ -213,55 +213,74 @@ export default function CallToActionSection() {
   const [activeRow, setActiveRow] = useState(-1);
 
   // ─────────────────────────────────────────────────────────────────────────────
-  // SCROLL BASED ANIMATION (The Construction Assembly)
+  // SCROLL BASED ANIMATION (The Construction Assembly & Zoom Exit)
   // ─────────────────────────────────────────────────────────────────────────────
   useGSAP(() => {
-    // Start the rooms as small dots waiting for the shutter to open
+    // Start the rooms as small dots
     gsap.set(".grid-cell", { scale: 0, borderRadius: "50%", opacity: 0 });
 
-    // 1. Entrance Transition (Targeting Scope / Iris Reveal)
-    // The grid is revealed through an expanding circular mask, like a camera lens opening
-    gsap.fromTo(".floorplan-grid", 
-      { 
-        clipPath: "circle(0% at 50% 50%)",
-        scale: 0.8
-      },
-      {
-        scrollTrigger: {
-          trigger: sectionRef.current,
-          start: "top bottom",
-          end: "top top",
-          scrub: true,
-        },
-        clipPath: "circle(150% at 50% 50%)", // 150% ensures it fully clears the corners
-        scale: 1,
-        ease: "power1.inOut"
-      }
-    );
+    // 1. PIN THE ENTIRE SECTION FOR 160vh
+    ScrollTrigger.create({
+      trigger: containerRef.current,
+      start: "top top",
+      end: "+=160%", 
+      pin: true,
+    });
 
-    // 2. The Assembly Animation (Pins and expands)
+    // 2. ENTRANCE & ASSEMBLY (Plays automatically when pinned)
     const tl = gsap.timeline({
       scrollTrigger: {
-        trigger: sectionRef.current,
+        trigger: containerRef.current,
         start: "top top",
-        end: "+=60%", // Pin just long enough for the assembly animation
-        scrub: false, 
-        pin: true,
-        toggleActions: "play none none reverse" // Assemble on scroll down, deconstruct on scroll up
+        toggleActions: "play none none reverse",
       }
     });
 
-    // Snap the rooms into a rigid structural grid from the center outwards
+    // The grid is revealed through an expanding circular mask
+    tl.fromTo(".floorplan-grid", 
+      { clipPath: "circle(0% at 50% 50%)" },
+      { clipPath: "circle(150% at 50% 50%)", duration: 1, ease: "power2.inOut", force3D: true }
+    );
+
+    // Snap the rooms into a rigid structural grid
     tl.to(".grid-cell", {
       scale: 1,
       opacity: 1,
-      borderRadius: "0%", // Morphs from a dot into a rigid architectural block
+      borderRadius: "0%", 
       duration: 1.2,
       stagger: { amount: 1, grid: [4, 4], from: "center" }, 
-      ease: "power4.out"
+      ease: "power4.out",
+      force3D: true
+    }, "-=0.5");
+
+    // 3. CINEMATIC ZOOM-THROUGH EXIT (Plays while scrolling the last 100vh of the pin)
+    gsap.to(".floorplan-grid", {
+      scrollTrigger: {
+        trigger: containerRef.current,
+        start: "top -60%", // Starts after 60vh of scroll
+        end: "top -160%",  // Ends at 160vh of scroll (right as it unpins)
+        scrub: true,
+      },
+      scale: 30, // Exponential zoom through the center gap
+      opacity: 0, 
+      transformOrigin: "50% 50%",
+      ease: "power3.in",
+      force3D: true
     });
 
-  }, { scope: sectionRef });
+    // Fade background to pitch black as you dive through the grid
+    gsap.to(sectionRef.current, {
+      scrollTrigger: {
+        trigger: containerRef.current,
+        start: "top -110%", // Starts halfway through the zoom
+        end: "top -160%",
+        scrub: true,
+      },
+      backgroundColor: "#000000",
+      ease: "none"
+    });
+
+  }, { scope: containerRef });
 
   // ─────────────────────────────────────────────────────────────────────────────
   // DYNAMIC GRID PHYSICS
@@ -278,20 +297,23 @@ export default function CallToActionSection() {
     backgroundColor: "#000000", // Shows through the gaps as thick structural walls
     gap: "4px",
     boxSizing: "border-box",
+    contain: "layout paint",
+    willChange: "transform, opacity, clip-path"
   };
 
   return (
-    <section
-      ref={sectionRef}
-      style={{
-        height: "100vh",
-        width: "100vw",
-        backgroundColor: "#ffffff",
-        zIndex: 40,
-        position: "relative",
-      }}
-    >
-      <div style={{ padding: "5vh 5vw", width: "100%", height: "100%", boxSizing: "border-box" }}>
+    <div ref={containerRef}>
+      <section
+        ref={sectionRef}
+        style={{
+          height: "100vh",
+          width: "100vw",
+          backgroundColor: "#ffffff",
+          zIndex: 40,
+          position: "relative",
+        }}
+      >
+        <div style={{ padding: "5vh 5vw", width: "100%", height: "100%", boxSizing: "border-box" }}>
           
           {/* ── THE ELASTIC FLOORPLAN ── */}
           <div 
@@ -314,6 +336,7 @@ export default function CallToActionSection() {
                     width: "100%", height: "100%",
                     overflow: "hidden", 
                     backgroundColor: "#ffffff", // Default room color
+                    contain: "layout paint",
                   }}
                 >
                   {cell.render(isHovered)}
@@ -322,6 +345,7 @@ export default function CallToActionSection() {
             })}
       </div>
       </div>
-    </section>
+      </section>
+    </div>
   );
 }

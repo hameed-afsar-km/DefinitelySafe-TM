@@ -7,15 +7,13 @@ export default function SplashScreen({ onComplete }: { onComplete: () => void })
   const [phase, setPhase] = useState<"constructing" | "title" | "video" | "fading" | "done">("constructing");
 
   useEffect(() => {
-    let timer: ReturnType<typeof setTimeout>;
-    timer = setTimeout(() => setPhase("title"), 3000);
+    const timer = setTimeout(() => setPhase("title"), 3000);
     return () => clearTimeout(timer);
   }, []);
 
   useEffect(() => {
     if (phase !== "title") return;
-    let timer: ReturnType<typeof setTimeout>;
-    timer = setTimeout(() => setPhase("video"), 3000);
+    const timer = setTimeout(() => setPhase("video"), 3000);
     return () => clearTimeout(timer);
   }, [phase]);
 
@@ -37,8 +35,7 @@ export default function SplashScreen({ onComplete }: { onComplete: () => void })
 
   useEffect(() => {
     if (phase !== "fading") return;
-    let timer: ReturnType<typeof setTimeout>;
-    timer = setTimeout(() => {
+    const timer = setTimeout(() => {
       setPhase("done");
       onComplete();
     }, 3000);
@@ -129,6 +126,7 @@ export default function SplashScreen({ onComplete }: { onComplete: () => void })
           className="absolute inset-0 z-20 h-full w-full object-cover animate-fade-in"
           muted
           playsInline
+          preload="auto"
         >
           <source src="/splash.webm" type="video/webm" />
         </video>

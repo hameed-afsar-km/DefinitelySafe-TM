@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useEffect, useState, useCallback } from "react";
+import { useRef, useEffect, useCallback } from "react";
 import { motion, useMotionValue, useSpring, useTransform } from "framer-motion";
 
 const TOTAL_FRAMES = 153;
@@ -17,7 +17,6 @@ export default function HeroSection({ showIndicator = false }: { showIndicator?:
   const sectionRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const indicatorRef = useRef<HTMLDivElement>(null);
-  const [loadPct, setLoadPct] = useState(0);
 
   const mouseX = useMotionValue(0);
   const mouseY = useMotionValue(0);
@@ -46,13 +45,14 @@ export default function HeroSection({ showIndicator = false }: { showIndicator?:
     if (!ctx) return;
 
     let destroyed = false;
-    let bitmaps: ImageBitmap[] = new Array(TOTAL_FRAMES);
-    let loadedCount = 0;
+    const bitmaps: ImageBitmap[] = new Array(TOTAL_FRAMES);
     let rafId = 0;
+    let running = false;
     let currentFrame = 0;
     let targetFrame = 0;
     let lastDrawn = -1;
     let lastTime = performance.now();
+    const controller = new AbortController();
 
     function resizeCanvas() {
       const dpr = Math.min(window.devicePixelRatio || 1, 1.5);
@@ -100,17 +100,15 @@ export default function HeroSection({ showIndicator = false }: { showIndicator?:
       }
     }
 
-    function onScroll() {
-      updateTarget();
-    }
-
     function tick(now: number) {
+      if (!running) return;
       const dt = Math.min((now - lastTime) / 16.667, 3);
       lastTime = now;
 
       const diff = targetFrame - currentFrame;
       if (Math.abs(diff) < 0.001) {
         currentFrame = targetFrame;
+        running = false;
       } else {
         currentFrame += diff * (1 - Math.exp(-LERP_SPEED * dt));
       }
@@ -122,52 +120,77 @@ export default function HeroSection({ showIndicator = false }: { showIndicator?:
         lastDrawn = idx;
       }
 
+      if (running) rafId = requestAnimationFrame(tick);
+    }
+
+    function startLoop() {
+      if (running) return;
+      running = true;
+      lastTime = performance.now();
       rafId = requestAnimationFrame(tick);
     }
 
+    function stopLoop() {
+      running = false;
+      cancelAnimationFrame(rafId);
+    }
+
     async function loadAll() {
-      const CONCURRENT = 12;
+      const CONCURRENT = 4;
       let next = 0;
 
       async function worker() {
         while (next < TOTAL_FRAMES && !destroyed) {
           const i = next++;
           try {
-            const resp = await fetch(framePath(i));
+            const resp = await fetch(framePath(i), { signal: controller.signal });
             const blob = await resp.blob();
-            const bm = await createImageBitmap(blob);
-            bitmaps[i] = bm;
+            bitmaps[i] = await createImageBitmap(blob);
           } catch {
             try {
-              const resp = await fetch(framePath(i));
+              const resp = await fetch(framePath(i), { signal: controller.signal });
               const blob = await resp.blob();
               bitmaps[i] = await createImageBitmap(blob);
             } catch {
               // skip frame
             }
           }
-          loadedCount++;
-          setLoadPct(Math.round((loadedCount / TOTAL_FRAMES) * 100));
         }
       }
 
       await Promise.all(Array.from({ length: CONCURRENT }, worker));
     }
 
-    window.addEventListener("scroll", onScroll, { passive: true });
+    const stickyEl = section.querySelector(".sticky") as HTMLElement | null;
+    const visObs = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) startLoop();
+      },
+      { threshold: 0 }
+    );
+    if (stickyEl) visObs.observe(stickyEl);
+
+    function onScrollRestart() {
+      updateTarget();
+      if (!running && currentFrame !== targetFrame) startLoop();
+    }
+
+    window.addEventListener("scroll", onScrollRestart, { passive: true });
     updateTarget();
 
     loadAll().then(() => {
       if (destroyed) return;
       lastTime = performance.now();
-      rafId = requestAnimationFrame(tick);
+      startLoop();
     });
 
     return () => {
       destroyed = true;
-      window.removeEventListener("scroll", onScroll);
+      controller.abort();
+      window.removeEventListener("scroll", onScrollRestart);
       window.removeEventListener("resize", resizeCanvas);
-      cancelAnimationFrame(rafId);
+      stopLoop();
+      visObs.disconnect();
       for (const bm of bitmaps) {
         if (bm) bm.close();
       }

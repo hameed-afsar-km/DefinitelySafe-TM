@@ -8,6 +8,8 @@ import Scroll2Section from "@/components/Scroll2Section";
 import CatalogueSection from "@/components/CatalogueSection";
 
 import CallToActionSection from "@/components/CallToActionSection";
+import FooterSection from "@/components/FooterSection";
+import GlobalCursor from "@/components/GlobalCursor";
 
 function LazyMount({ children }: { children: React.ReactNode }) {
   const sentinelRef = useRef<HTMLDivElement>(null);
@@ -21,7 +23,6 @@ function LazyMount({ children }: { children: React.ReactNode }) {
         if (entry.isIntersecting) {
           setVisible(true);
           obs.disconnect();
-          requestAnimationFrame(() => window.dispatchEvent(new Event("resize")));
         }
       },
       { rootMargin: "200% 0px" }
@@ -58,7 +59,8 @@ export default function Home() {
   }, []);
 
   return (
-    <main className="min-h-screen">
+    <main className="min-h-screen" style={{ cursor: "none" }}>
+      <GlobalCursor />
       {!splashDone && <SplashScreen onComplete={handleSplashComplete} />}
       <div
         className={`transition-opacity duration-1000 ease-in ${
@@ -82,6 +84,11 @@ export default function Home() {
       <div className="w-full relative" style={{ zIndex: 30 }}>
         <LazyMount>
           <CallToActionSection />
+        </LazyMount>
+      </div>
+      <div className="w-full relative" style={{ zIndex: 35 }}>
+        <LazyMount>
+          <FooterSection />
         </LazyMount>
       </div>
     </main>

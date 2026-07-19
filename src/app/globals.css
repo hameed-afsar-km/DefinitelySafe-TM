@@ -1,4 +1,5 @@
 @import "tailwindcss";
+@import "lenis/dist/lenis.css";
 
 @font-face {
   font-family: "MuroSp";
@@ -35,6 +36,8 @@
 :root {
   --background: #ffffff;
   --foreground: #171717;
+  --font-geist-sans: "Geist", sans-serif;
+  --font-geist-mono: "Geist Mono", monospace;
 }
 
 @theme inline {
@@ -348,254 +351,14 @@ html {
 }
 
 /* ============================================================
-   CATALOGUE SECTION
+   FOOTER SECTION
    ============================================================ */
 
-.catalogue-section {
-  position: relative;
-  background: #0a0a0a;
-  padding-bottom: 6rem;
-  overflow: hidden;
+:root {
+  --f-title: 'Anton', sans-serif;
+  --f-mono: 'JetBrains Mono', monospace;
 }
 
-/* Transition band — jagged diagonal wipe from the white scroll-2 section */
-.catalogue-transition-band {
-  width: 100%;
-  height: 120px;
-  background: #ffffff;
-  clip-path: polygon(0 0, 100% 0, 100% 30%, 0 100%);
-  margin-bottom: -1px;
-}
-
-/* ---- Header ---- */
-.catalogue-header {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 5rem 2rem 4rem;
-  position: relative;
-}
-
-.catalogue-header-eyebrow {
-  font-family: "MuroSp", sans-serif;
-  font-size: 0.75rem;
-  letter-spacing: 0.35em;
-  text-transform: uppercase;
-  color: rgba(255,255,255,0.4);
-  margin-bottom: 1.25rem;
-}
-
-.catalogue-header-title {
-  font-family: "Triac71", serif;
-  font-size: clamp(3.5rem, 7vw, 6rem);
-  line-height: 1;
-  color: #ffffff;
-  margin-bottom: 1.5rem;
-}
-
-.catalogue-header-title-accent {
-  color: transparent;
-  -webkit-text-stroke: 1px rgba(255,255,255,0.6);
-  font-style: italic;
-}
-
-.catalogue-header-sub {
-  font-family: "TheSkinny", sans-serif;
-  font-size: clamp(1rem, 1.6vw, 1.25rem);
-  color: rgba(255,255,255,0.45);
-  max-width: 480px;
-  line-height: 1.65;
-  margin-bottom: 2.5rem;
-}
-
-.catalogue-header-line {
-  width: 60px;
-  height: 1px;
-  background: rgba(255,255,255,0.2);
-}
-
-/* ---- Grid ---- */
-.catalogue-grid {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 0 2rem;
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 2.5rem;
-}
-
-@media (max-width: 768px) {
-  .catalogue-grid {
-    grid-template-columns: 1fr;
-    gap: 2rem;
-  }
-}
-
-/* ---- Card wrapper (for reveal animation) ---- */
-.catalogue-card-wrapper {
-  will-change: opacity, transform;
-}
-
-/* ---- Card ---- */
-.catalogue-card {
-  position: relative;
-  background: #111111;
-  border: 1px solid rgba(255,255,255,0.07);
-  border-radius: 4px;
-  overflow: hidden;
-  cursor: pointer;
-  transition: border-color 0.4s ease, box-shadow 0.4s ease;
-}
-
-.catalogue-card:hover {
-  border-color: rgba(255,255,255,0.18);
-  box-shadow: 0 30px 80px rgba(0,0,0,0.6);
-}
-
-/* ---- Image container ---- */
-.catalogue-card-image-wrap {
-  position: relative;
-  width: 100%;
-  aspect-ratio: 4 / 3;
-  overflow: hidden;
-}
-
-.catalogue-card-image-inner {
-  position: absolute;
-  inset: -5%;
-  will-change: transform;
-}
-
-.catalogue-card-image-inner img {
-  object-fit: cover;
-}
-
-/* Gradient overlay */
-.catalogue-card-overlay {
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(
-    to bottom,
-    transparent 40%,
-    rgba(0,0,0,0.85) 100%
-  );
-  pointer-events: none;
-}
-
-/* Index number — top-left stamp */
-.catalogue-card-index {
-  position: absolute;
-  top: 1.25rem;
-  left: 1.25rem;
-  font-family: "MuroSp", sans-serif;
-  font-size: 0.7rem;
-  letter-spacing: 0.25em;
-  color: rgba(255,255,255,0.5);
-  background: rgba(0,0,0,0.45);
-  backdrop-filter: blur(6px);
-  padding: 0.3rem 0.6rem;
-  border: 1px solid rgba(255,255,255,0.1);
-}
-
-/* Category chip — bottom of image, appears on hover */
-.catalogue-card-chip {
-  position: absolute;
-  bottom: 1.25rem;
-  left: 1.25rem;
-  font-family: "MuroSp", sans-serif;
-  font-size: 0.65rem;
-  letter-spacing: 0.25em;
-  text-transform: uppercase;
-  color: #ffffff;
-  background: rgba(255,255,255,0.12);
-  backdrop-filter: blur(8px);
-  border: 1px solid rgba(255,255,255,0.2);
-  padding: 0.35rem 0.8rem;
-  border-radius: 2px;
-  will-change: opacity, transform;
-}
-
-/* ---- Text Content ---- */
-.catalogue-card-content {
-  padding: 1.75rem 2rem 2rem;
-}
-
-.catalogue-card-divider {
-  width: 32px;
-  height: 1px;
-  background: rgba(255,255,255,0.15);
-  margin-bottom: 1rem;
-  transition: width 0.4s ease;
-}
-
-.catalogue-card:hover .catalogue-card-divider {
-  width: 56px;
-  background: rgba(255,255,255,0.35);
-}
-
-.catalogue-card-category {
-  font-family: "MuroSp", sans-serif;
-  font-size: 0.65rem;
-  letter-spacing: 0.3em;
-  text-transform: uppercase;
-  color: rgba(255,255,255,0.35);
-  margin-bottom: 0.75rem;
-}
-
-.catalogue-card-headline {
-  font-family: "Triac71", serif;
-  font-size: clamp(1.4rem, 2.5vw, 2rem);
-  line-height: 1.15;
-  color: #ffffff;
-  margin-bottom: 1rem;
-}
-
-.catalogue-card-body {
-  font-family: "TheSkinny", sans-serif;
-  font-size: clamp(0.85rem, 1.2vw, 1rem);
-  color: rgba(255,255,255,0.45);
-  line-height: 1.7;
-  margin-bottom: 1.5rem;
-}
-
-/* CTA link */
-.catalogue-card-cta {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5rem;
-  font-family: "MuroSp", sans-serif;
-  font-size: 0.7rem;
-  letter-spacing: 0.2em;
-  text-transform: uppercase;
-  color: rgba(255,255,255,0.5);
-  transition: color 0.3s ease, gap 0.3s ease;
-}
-
-.catalogue-card:hover .catalogue-card-cta {
-  color: rgba(255,255,255,0.9);
-  gap: 0.75rem;
-}
-
-/* ---- Footer strip ---- */
-.catalogue-footer-strip {
-  max-width: 1200px;
-  margin: 5rem auto 0;
-  padding: 0 2rem;
-  display: flex;
-  align-items: center;
-  gap: 2rem;
-}
-
-.catalogue-footer-text {
-  font-family: "MuroSp", sans-serif;
-  font-size: 0.65rem;
-  letter-spacing: 0.3em;
-  text-transform: uppercase;
-  color: rgba(255,255,255,0.2);
-  white-space: nowrap;
-}
-
-.catalogue-footer-line {
-  flex: 1;
-  height: 1px;
-  background: rgba(255,255,255,0.07);
+.ft-root, .ft-root * {
+  cursor: none !important;
 }

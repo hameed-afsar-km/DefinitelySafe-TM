@@ -46,8 +46,7 @@ export default function Scroll2Section() {
     if (!ctx) return;
 
     let destroyed = false;
-    let bitmaps: ImageBitmap[] = new Array(TOTAL_FRAMES);
-    let loadedCount = 0;
+    const bitmaps: ImageBitmap[] = new Array(TOTAL_FRAMES);
     let rafId = 0;
     let running = false;
     let currentFrame = 0;
@@ -55,6 +54,7 @@ export default function Scroll2Section() {
     let lastDrawn = -1;
     let lastTime = performance.now();
     let pendingBeamP = 0;
+    const controller = new AbortController();
 
     function resizeCanvas() {
       const dpr = Math.min(window.devicePixelRatio || 1, 1.5);
@@ -110,6 +110,8 @@ export default function Scroll2Section() {
 
     function onScroll() {
       updateTarget();
+      applyBeams(pendingBeamP);
+      if (!running && currentFrame !== targetFrame) startLoop();
     }
 
     function tick(now: number) {
@@ -120,6 +122,7 @@ export default function Scroll2Section() {
       const diff = targetFrame - currentFrame;
       if (Math.abs(diff) < 0.001) {
         currentFrame = targetFrame;
+        running = false;
       } else {
         currentFrame += diff * (1 - Math.exp(-LERP_SPEED * dt));
       }
@@ -131,9 +134,7 @@ export default function Scroll2Section() {
         lastDrawn = idx;
       }
 
-      applyBeams(pendingBeamP);
-
-      rafId = requestAnimationFrame(tick);
+      if (running) rafId = requestAnimationFrame(tick);
     }
 
     function startLoop() {
@@ -169,19 +170,18 @@ export default function Scroll2Section() {
         while (next < TOTAL_FRAMES && !destroyed) {
           const i = next++;
           try {
-            const resp = await fetch(framePath(i));
+            const resp = await fetch(framePath(i), { signal: controller.signal });
             const blob = await resp.blob();
             bitmaps[i] = await createImageBitmap(blob);
           } catch {
             try {
-              const resp = await fetch(framePath(i));
+              const resp = await fetch(framePath(i), { signal: controller.signal });
               const blob = await resp.blob();
               bitmaps[i] = await createImageBitmap(blob);
             } catch {
               // skip frame
             }
           }
-          loadedCount++;
         }
       }
 
@@ -199,6 +199,7 @@ export default function Scroll2Section() {
 
     return () => {
       destroyed = true;
+      controller.abort();
       stopLoop();
       window.removeEventListener("scroll", onScroll);
       window.removeEventListener("resize", resizeCanvas);

@@ -14,7 +14,7 @@ if (typeof window !== "undefined") {
 const CATALOGUE = [
   {
     id: "01",
-    image: "/assets/images/1.jpeg",
+    image: "/assets/images/1.webp",
     category: "Contemporary Architecture",
     headline: "Built to Impress.",
     subline: "Engineered to Last.",
@@ -22,7 +22,7 @@ const CATALOGUE = [
   },
   {
     id: "02",
-    image: "/assets/images/2.jpeg",
+    image: "/assets/images/2.webp",
     category: "Interior Craftsmanship",
     headline: "Where Comfort",
     subline: "Meets Precision.",
@@ -30,7 +30,7 @@ const CATALOGUE = [
   },
   {
     id: "03",
-    image: "/assets/images/3.jpeg",
+    image: "/assets/images/3.webp",
     category: "Panoramic Living",
     headline: "Spaces That",
     subline: "Connect With Nature.",
@@ -38,7 +38,7 @@ const CATALOGUE = [
   },
   {
     id: "04",
-    image: "/assets/images/4.jpeg",
+    image: "/assets/images/4.webp",
     category: "Premium Finishes",
     headline: "Every Detail",
     subline: "Has a Purpose.",
@@ -63,34 +63,61 @@ export default function CatalogueSection() {
   const posRef = useRef({ x: 0, y: 0 });
   const curRef = useRef({ x: 0, y: 0 });
 
-  /* ── Smooth cursor follower using RAF ── */
+  /* ── Smooth cursor follower using RAF (lifecycle-controlled) ── */
   useEffect(() => {
+    const list = listRef.current;
+    if (!list) return;
+
+    let cachedRect: DOMRect | null = null;
+    let cursorActive = false;
+
     const onMove = (e: MouseEvent) => {
       posRef.current = { x: e.clientX, y: e.clientY };
     };
-    window.addEventListener("mousemove", onMove);
 
     const loop = () => {
+      if (!cursorActive) return;
       const speed = 0.1;
       curRef.current.x += (posRef.current.x - curRef.current.x) * speed;
       curRef.current.y += (posRef.current.y - curRef.current.y) * speed;
 
-      if (followerRef.current) {
-        const rect = sectionRef.current?.getBoundingClientRect();
-        if (rect) {
-          gsap.set(followerRef.current, {
-            x: curRef.current.x - rect.left - 170,
-            y: curRef.current.y - rect.top - 170,
-          });
-        }
+      if (followerRef.current && cachedRect) {
+        gsap.set(followerRef.current, {
+          x: curRef.current.x - cachedRect.left - 170,
+          y: curRef.current.y - cachedRect.top - 170,
+        });
       }
       rafRef.current = requestAnimationFrame(loop);
     };
-    rafRef.current = requestAnimationFrame(loop);
+
+    function startCursor() {
+      if (cursorActive) return;
+      cursorActive = true;
+      cachedRect = sectionRef.current?.getBoundingClientRect() ?? null;
+      window.addEventListener("mousemove", onMove);
+      rafRef.current = requestAnimationFrame(loop);
+    }
+
+    function stopCursor() {
+      cursorActive = false;
+      cancelAnimationFrame(rafRef.current);
+      window.removeEventListener("mousemove", onMove);
+    }
+
+    list.addEventListener("mouseenter", startCursor);
+    list.addEventListener("mouseleave", stopCursor);
+
+    const onResize = () => { cachedRect = sectionRef.current?.getBoundingClientRect() ?? null; };
+    const onScroll = () => { cachedRect = sectionRef.current?.getBoundingClientRect() ?? null; };
+    window.addEventListener("resize", onResize);
+    window.addEventListener("scroll", onScroll, { passive: true });
 
     return () => {
-      window.removeEventListener("mousemove", onMove);
-      cancelAnimationFrame(rafRef.current);
+      stopCursor();
+      list.removeEventListener("mouseenter", startCursor);
+      list.removeEventListener("mouseleave", stopCursor);
+      window.removeEventListener("resize", onResize);
+      window.removeEventListener("scroll", onScroll);
     };
   }, []);
 
@@ -250,6 +277,7 @@ export default function CatalogueSection() {
           zIndex: 50,
           opacity: 0, // starts invisible
           borderRadius: "16px",
+          willChange: "transform", // Hardware accelerate cursor movement
         }}
       >
         {/* Shadow layer — delayed fade-in on hover */}
@@ -286,6 +314,7 @@ export default function CatalogueSection() {
                 clipPath: "inset(100% 0% 0% 0%)", // hidden by default; GSAP reveals
                 // Keep active or last-active on top so wipe transitions look correct
                 zIndex: activeIndex === i ? 3 : prevIndex === i ? 2 : 1,
+                willChange: "clip-path",
               }}
             >
               <Image
@@ -349,6 +378,7 @@ export default function CatalogueSection() {
                 color: "rgba(0,0,0,0.4)",
                 marginBottom: "1.25rem",
                 display: "block",
+                transform: "translateZ(0)",
               }}
             >
               Our Expertise
@@ -365,6 +395,7 @@ export default function CatalogueSection() {
                 color: "#111",
                 letterSpacing: "-0.04em",
                 margin: 0,
+                transform: "translateZ(0)",
               }}
             >
               Spaces that
@@ -381,6 +412,7 @@ export default function CatalogueSection() {
                 color: "#111",
                 letterSpacing: "-0.04em",
                 margin: 0,
+                transform: "translateZ(0)",
               }}
             >
               <span style={{ color: "rgba(0,0,0,0.22)" }}>Speak.</span>
@@ -420,6 +452,7 @@ export default function CatalogueSection() {
       {/* ── Catalogue Rows ── */}
       <div
         ref={listRef}
+        data-no-cursor
         style={{
           maxWidth: "1280px",
           margin: "0 auto",
@@ -496,8 +529,9 @@ export default function CatalogueSection() {
                       letterSpacing: "-0.035em",
                       color: "#111",
                       display: "block",
-                      transform: activeIndex === i ? "translateX(1.2rem)" : "translateX(0)",
+                      transform: activeIndex === i ? "translateX(1.2rem) translateZ(0)" : "translateX(0) translateZ(0)",
                       transition: "transform 0.5s cubic-bezier(0.16,1,0.3,1)",
+                      willChange: "transform",
                     }}
                   >
                     {item.headline}
@@ -513,8 +547,9 @@ export default function CatalogueSection() {
                       letterSpacing: "-0.035em",
                       color: activeIndex === i ? "#111" : "rgba(0,0,0,0.2)",
                       display: "block",
-                      transform: activeIndex === i ? "translateX(2rem)" : "translateX(0)",
+                      transform: activeIndex === i ? "translateX(2rem) translateZ(0)" : "translateX(0) translateZ(0)",
                       transition: "color 0.5s ease, transform 0.55s cubic-bezier(0.16,1,0.3,1)",
+                      willChange: "transform",
                     }}
                   >
                     {item.subline}
@@ -530,8 +565,9 @@ export default function CatalogueSection() {
                     color: "rgba(0,0,0,0.35)",
                     display: "block",
                     marginTop: "0.6rem",
-                    transform: activeIndex === i ? "translateX(1rem)" : "translateX(0)",
+                    transform: activeIndex === i ? "translateX(1rem) translateZ(0)" : "translateX(0) translateZ(0)",
                     transition: "transform 0.4s cubic-bezier(0.16,1,0.3,1)",
+                    willChange: "transform",
                   }}
                 >
                   {item.category} / {item.year}
